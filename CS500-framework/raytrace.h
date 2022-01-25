@@ -2,6 +2,8 @@
 // A framework for a raytracer.
 ////////////////////////////////////////////////////////////////////////
 
+#include "Camera.h"
+
 class Shape;
 
 const float PI = 3.14159f;
@@ -76,6 +78,8 @@ public:
     int width, height;
     Realtime* realtime;         // Remove this (realtime stuff)
     Material* currentMat;
+
+    Camera* camera;
 
     Scene();
     void Finit();

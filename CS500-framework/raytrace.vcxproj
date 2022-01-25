@@ -120,12 +120,44 @@ xcopy .\libs\assimp\32\assimp.dll .\Release /Y /D</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="acceleration.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="geom.cpp" />
     <ClCompile Include="raytrace.cpp" />
     <ClCompile Include="readAssimpFile.cpp" />
     <ClCompile Include="realtime.cpp" />
     <ClCompile Include="rgbe.cpp" />
+    <ClInclude Include="acceleration.h" />
+    <ClInclude Include="bvh\binned_sah_builder.hpp" />
+    <ClInclude Include="bvh\bottom_up_algorithm.hpp" />
+    <ClInclude Include="bvh\bounding_box.hpp" />
+    <ClInclude Include="bvh\bvh.hpp" />
+    <ClInclude Include="bvh\heuristic_primitive_splitter.hpp" />
+    <ClInclude Include="bvh\hierarchy_refitter.hpp" />
+    <ClInclude Include="bvh\leaf_collapser.hpp" />
+    <ClInclude Include="bvh\linear_bvh_builder.hpp" />
+    <ClInclude Include="bvh\locally_ordered_clustering_builder.hpp" />
+    <ClInclude Include="bvh\morton.hpp" />
+    <ClInclude Include="bvh\morton_code_based_builder.hpp" />
+    <ClInclude Include="bvh\node_intersectors.hpp" />
+    <ClInclude Include="bvh\node_layout_optimizer.hpp" />
+    <ClInclude Include="bvh\parallel_reinsertion_optimizer.hpp" />
+    <ClInclude Include="bvh\platform.hpp" />
+    <ClInclude Include="bvh\prefix_sum.hpp" />
+    <ClInclude Include="bvh\primitive_intersectors.hpp" />
+    <ClInclude Include="bvh\radix_sort.hpp" />
+    <ClInclude Include="bvh\ray.hpp" />
+    <ClInclude Include="bvh\sah_based_algorithm.hpp" />
+    <ClInclude Include="bvh\single_ray_traverser.hpp" />
+    <ClInclude Include="bvh\spatial_split_bvh_builder.hpp" />
+    <ClInclude Include="bvh\sphere.hpp" />
+    <ClInclude Include="bvh\sweep_sah_builder.hpp" />
+    <ClInclude Include="bvh\top_down_builder.hpp" />
+    <ClInclude Include="bvh\triangle.hpp" />
+    <ClInclude Include="bvh\utilities.hpp" />
+    <ClInclude Include="bvh\vector.hpp" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="Ray.h" />
     <ClInclude Include="realtime.h" />
     <ClInclude Include="geom.h" />
   </ItemGroup>

@@ -31,6 +31,8 @@ std::uniform_real_distribution<> myrandom(0.0, 1.0);
 Scene::Scene() 
 { 
     realtime = new Realtime(); 
+
+    camera = new Camera();
 }
 
 void Scene::Finit()
@@ -79,7 +81,11 @@ void Scene::Command(const std::vector<std::string>& strings,
     else if (c == "camera") {
         // syntax: camera x y z   ry   <orientation spec>
         // Eye position (x,y,z),  view orientation (qw qx qy qz),  frustum height ratio ry
-        realtime->setCamera(vec3(f[1],f[2],f[3]), Orientation(5,strings,f), f[4]); }
+        realtime->setCamera(vec3(f[1],f[2],f[3]), Orientation(5,strings,f), f[4]); 
+        camera->eye = vec3(f[1], f[2], f[3]);
+        camera->orient = Orientation(5, strings, f);
+        camera->ry = f[4];
+    }
 
     else if (c == "ambient") {
         // syntax: ambient r g b
@@ -147,12 +153,14 @@ void Scene::TraceImage(Color* image, const int pass)
         fprintf(stderr, "Rendering %4d\r", y);
         for (int x=0;  x<width;  x++) {
             Color color;
+            
             if ((x-width/2)*(x-width/2)+(y-height/2)*(y-height/2) < 100*100)
                 color = Color(myrandom(RNGen), myrandom(RNGen), myrandom(RNGen));
             else if (abs(x-width/2)<4 || abs(y-height/2)<4)
                 color = Color(0.0, 0.0, 0.0);
             else 
                 color = Color(1.0, 1.0, 1.0);
+            
             image[y*width + x] = color;
         }
     }
