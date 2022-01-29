@@ -14,6 +14,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include "Shape.h"
+
 void recurseModelNodes(Scene* scene,
                        const  aiScene* aiscene,
                        const  aiNode* node,
@@ -82,9 +84,9 @@ void recurseModelNodes(Scene* scene,
         //aiColor3D spec (0.f,0.f,0.f); 
         //float s;
         // if (AI_SUCCESS == mtl->Get(AI_MATKEY_COLOR_DIFFUSE, diff))
-        //     scene->setKd(vec3(diff.r, diff.g, diff.b));
+        //     scene->setKd(vec3(diff.radius, diff.g, diff.b));
         // if (AI_SUCCESS == mtl->Get(AI_MATKEY_COLOR_SPECULAR, spec))
-        //     scene->setKs(vec3(spec.r, spec.g, spec.b));
+        //     scene->setKs(vec3(spec.radius, spec.g, spec.b));
         // if (AI_SUCCESS == mtl->Get(AI_MATKEY_SHININESS, &s, NULL))
         //     scene->setAlpha(s);
         
@@ -116,7 +118,22 @@ void recurseModelNodes(Scene* scene,
             for (int i=2;  i<aiface->mNumIndices;  i++) {
                 meshdata->triangles.push_back(ivec3(aiface->mIndices[0],
                                                     aiface->mIndices[i-1],
-                                                    aiface->mIndices[i])); } }
+                                                    aiface->mIndices[i])); 
+
+                /*
+                Triangle* tri = new Triangle(
+                    glm::vec3(aimesh->mVertices[aiface->mIndices[0]].x, aimesh->mVertices[aiface->mIndices[0]].y, aimesh->mVertices[aiface->mIndices[0]].z),
+                    glm::vec3(aimesh->mVertices[aiface->mIndices[i - 1]].x, aimesh->mVertices[aiface->mIndices[i - 1]].y, aimesh->mVertices[aiface->mIndices[i - 1]].z),
+                    glm::vec3(aimesh->mVertices[aiface->mIndices[i]].x, aimesh->mVertices[aiface->mIndices[i]].y, aimesh->mVertices[aiface->mIndices[i]].z)
+                );
+                scene->vectorOfShapes.push_back(tri);
+                */
+            } 
+            
+        }
+
+        
+
         meshdata->mat = scene->currentMat;
         scene->triangleMesh(meshdata); }
 

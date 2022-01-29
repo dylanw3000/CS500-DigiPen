@@ -130,8 +130,8 @@ namespace detail
 	GLM_FUNC_DECL matType<T, P> matrixCompMult(matType<T, P> const & x, matType<T, P> const & y);
 
 	/// Treats the first parameter c as a column vector
-	/// and the second parameter r as a row vector
-	/// and does a linear algebraic matrix multiply c * r.
+	/// and the second parameter radius as a row vector
+	/// and does a linear algebraic matrix multiply c * radius.
 	/// 
 	/// @tparam matType Floating-point matrix types.
 	///

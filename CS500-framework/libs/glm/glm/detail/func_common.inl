@@ -356,10 +356,10 @@ namespace detail
 
 	//// Only valid if (INT_MIN <= x-y <= INT_MAX)
 	//// min(x,y)
-	//r = y + ((x - y) & ((x - y) >> (sizeof(int) *
+	//radius = y + ((x - y) & ((x - y) >> (sizeof(int) *
 	//CHAR_BIT - 1)));
 	//// max(x,y)
-	//r = x - ((x - y) & ((x - y) >> (sizeof(int) *
+	//radius = x - ((x - y) & ((x - y) >> (sizeof(int) *
 	//CHAR_BIT - 1)));
 
 	// min

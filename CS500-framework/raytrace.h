@@ -4,7 +4,8 @@
 
 #include "Camera.h"
 
-class Shape;
+#include "Shape.h"
+#include "Ray.h"
 
 const float PI = 3.14159f;
 const float Radians = PI/180.0f;    // Convert degrees to radians
@@ -80,6 +81,7 @@ public:
     Material* currentMat;
 
     Camera* camera;
+    std::vector<Shape*> vectorOfShapes;
 
     Scene();
     void Finit();

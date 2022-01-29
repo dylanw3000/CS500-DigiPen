@@ -18,12 +18,12 @@ vec3 vec3FromBvh(const bvh::Vector3<float>& v)
 bvh::Ray<float> RayToBvh(const Ray &r)
 {
     // Construct a bvh::Ray<float> with values
-    // r's origin, r's direction, 0, INFINIFY
+    // radius's origin, radius's direction, 0, INFINIFY
 }
 
 Ray RayFromBvh(const bvh::Ray<float> &r)
 {
-    // Construct one of your rays from r.origin, and r.direction
+    // Construct one of your rays from radius.origin, and radius.direction
 }
 
 

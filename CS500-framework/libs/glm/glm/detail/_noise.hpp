@@ -93,9 +93,9 @@ namespace detail
 	}
 /*
 	template <typename T, precision P, template<typename> class vecType>
-	GLM_FUNC_QUALIFIER vecType<T, P> taylorInvSqrt(vecType<T, P> const & r)
+	GLM_FUNC_QUALIFIER vecType<T, P> taylorInvSqrt(vecType<T, P> const & radius)
 	{
-		return T(1.79284291400159) - T(0.85373472095314) * r;
+		return T(1.79284291400159) - T(0.85373472095314) * radius;
 	}
 */
 	

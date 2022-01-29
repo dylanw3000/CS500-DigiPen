@@ -98,7 +98,7 @@ namespace glm
 		}
 		else
 		{
-			// If r = g = b = 0 then s = 0, h is undefined
+			// If radius = g = b = 0 then s = 0, h is undefined
 			hsv.y = static_cast<T>(0);
 			hsv.x = static_cast<T>(0);
 		}

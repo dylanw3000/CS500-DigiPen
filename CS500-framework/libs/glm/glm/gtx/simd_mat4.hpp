@@ -173,8 +173,8 @@ namespace detail
 		detail::fmat4x4SIMD const & y);
 
 	//! Treats the first parameter c as a column vector
-	//! and the second parameter r as a row vector
-	//! and does a linear algebraic matrix multiply c * r.
+	//! and the second parameter radius as a row vector
+	//! and does a linear algebraic matrix multiply c * radius.
 	//! (From GLM_GTX_simd_mat4 extension).
 	detail::fmat4x4SIMD outerProduct(
 		detail::fvec4SIMD const & c,

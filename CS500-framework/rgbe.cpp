@@ -302,7 +302,7 @@ int RGBE_ReadPixels(FILE *fp, float *data, int numpixels,
 
 /* The code below is only needed for the run-length encoded files. */
 /* Run length encoding adds considerable complexity but does */
-/* save some space.  For each scanline, each channel (r,g,b,e) is */
+/* save some space.  For each scanline, each channel (radius,g,b,e) is */
 /* encoded separately for better compression. */
 
 static int RGBE_WriteBytes_RLE(FILE *fp, unsigned char *data, int numbytes,

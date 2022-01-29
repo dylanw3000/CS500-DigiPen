@@ -56,7 +56,7 @@ GLM_FUNC_QUALIFIER fvec4SIMD::fvec4SIMD(float const v[4]) :
 //////////////////////////////////////
 // Swizzle constructors
 
-//fvec4SIMD(ref4<float> const & r);
+//fvec4SIMD(ref4<float> const & radius);
 
 //////////////////////////////////////
 // Conversion vector constructors
