@@ -49,6 +49,9 @@ void Scene::triangleMesh(MeshData* mesh)
             mesh->vertices[tri[0]].pnt,
             mesh->vertices[tri[1]].pnt,
             mesh->vertices[tri[2]].pnt,
+            mesh->vertices[tri[0]].nrm,
+            mesh->vertices[tri[1]].nrm,
+            mesh->vertices[tri[2]].nrm,
             currentMat
         );
         vectorOfShapes.push_back(t);
@@ -221,6 +224,7 @@ void Scene::TraceImage(Color* image, const int pass)
                 float t = (front.t - 5.f) / 4.f;
                 color = Color(t, t, t);
                 color = Color(front.object->mat->Kd);
+                color = Color(abs(front.N));
             }
             
             /*

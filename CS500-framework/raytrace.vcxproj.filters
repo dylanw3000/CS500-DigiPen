@@ -7,6 +7,7 @@
     <ClCompile Include="readAssimpFile.cpp" />
     <ClCompile Include="realtime.cpp" />
     <ClCompile Include="rgbe.cpp" />
+    <ClCompile Include="Shape.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="realtime.h" />
