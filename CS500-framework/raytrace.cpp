@@ -224,15 +224,25 @@ void Scene::TraceImage(Color* image, const int pass)
                 float t = (front.t - 5.f) / 4.f;
                 color = Color(t, t, t);
                 color = Color(front.object->mat->Kd);
+
+                /*
                 color = Color(abs(front.N));
+                vec3 lightPos(1.9, 5, 2);
+                vec3 lightColor(3, 3, 3);
+
+                vec3 N = normalize(front.N);
+                vec3 E = normalize(camera->eye - front.P);
+
+                vec3 L = normalize(lightPos - front.P);
+                vec3 H = normalize(L + E);
+
+                float NL = max(0.1f, dot(N, L));
+                float HN = max(0.f, dot(H, N));
+
+                float alpha = front.object->mat->alpha;
+                color = Color(lightColor * (front.object->mat->Kd * NL / 3.14f + alpha / 6.28f * front.object->mat->Ks * pow(HN, alpha)));
+                */
             }
-            
-            /*
-            {
-                float t = dy;
-                color = Color(t, t, t);
-            }
-            */
 
             image[y*width + x] = color;
         }
