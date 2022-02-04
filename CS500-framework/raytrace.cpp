@@ -200,7 +200,6 @@ void Scene::TraceImage(Color* image, const int pass)
                 current = shape->Intersect(ray);
                 if (current.collision && (!front.collision || current.t < front.t)) {
                     front = current;
-                    // front.object = shape;
                 }
             }
             */

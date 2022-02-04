@@ -66,14 +66,14 @@ SimpleBox BvhShape::bounding_box() const
     }
     else if (dynamic_cast<Cylinder*>(shape) != nullptr) {
         Cylinder* c = static_cast<Cylinder*>(shape);
-        
-        out = SimpleBox(c->base);
-        out.extend(c->base + vec3(c->radius));
-        out.extend(c->base - vec3(c->radius));
-        out.extend(c->base + c->ang);
-        out.extend(c->base + c->ang + vec3(c->radius));
-        out.extend(c->base + c->ang - vec3(c->radius));
-        
+        if (true) {
+            out = SimpleBox(c->base);
+            out.extend(c->base + vec3(c->radius));
+            out.extend(c->base - vec3(c->radius));
+            out.extend(c->base + c->ang);
+            out.extend(c->base + c->ang + vec3(c->radius));
+            out.extend(c->base + c->ang - vec3(c->radius));
+        }
     }
     else if (dynamic_cast<Triangle*>(shape) != nullptr) {
         Triangle* t = static_cast<Triangle*>(shape);
