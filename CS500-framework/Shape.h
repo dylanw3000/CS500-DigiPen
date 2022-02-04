@@ -40,24 +40,7 @@ public:
 	glm::vec3 N0, N1;
 };
 
-class Intersection {
-public:
-	Intersection() : t(INFINITY), object(nullptr) {}
-
-	void addIntersect(Shape* _o, float _t, vec3 _P, vec3 _N) {
-		collision = true;
-		t = _t;
-		object = _o;
-		P = _P;
-		N = _N;
-	}
-
-	float t;
-	Shape* object;
-	bool collision = false;
-	glm::vec3 P;
-	glm::vec3 N;
-};
+#include "Intersection.h"
 
 #include "Ray.h"
 
@@ -72,11 +55,14 @@ struct Intersection {
 // #include "Ray.h"
 */
 
+class SimpleBox;
+
 
 class Shape {
 public:
 	Shape() {}
-	virtual Intersection Intersect(csRay ray) = 0;
+	virtual Intersection Intersect(Ray ray) = 0;
+	// virtual void bvhBox() = 0;
 	Material* mat;
 };
 
@@ -87,9 +73,8 @@ public:
 	Sphere(glm::vec3 _pos, float _r, Material* _mat) : pos(_pos), r(_r) {
 		mat = _mat;
 	}
-	// Sphere();
 
-	Intersection Intersect(csRay ray);
+	Intersection Intersect(Ray ray);
 
 	glm::vec3 pos;
 	float r;
@@ -103,10 +88,10 @@ public:
 	Box(glm::vec3 _v1, glm::vec3 _v2, Material* _mat) : b(_v1), d(_v2) {
 		mat = _mat;
 	}
-	Intersection Intersect(csRay ray);
+	Intersection Intersect(Ray ray);
 
-	glm::vec3 b;
-	glm::vec3 d;
+	glm::vec3 b;	// base
+	glm::vec3 d;	// diagonal
 	// Material* mat;
 
 };
@@ -118,7 +103,7 @@ public:
 	Cylinder(glm::vec3 _pos, glm::vec3 _ang, float _r, Material* _mat) : base(_pos), ang(_ang), radius(_r) {
 		mat = _mat;
 	}
-	Intersection Intersect(csRay ray);
+	Intersection Intersect(Ray ray);
 
 	glm::vec3 base;
 	glm::vec3 ang;
@@ -139,7 +124,7 @@ public:
 	}
 
 public:
-	Intersection Intersect(csRay ray);
+	Intersection Intersect(Ray ray);
 
 public:
 	glm::vec3 v0;

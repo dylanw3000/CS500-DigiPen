@@ -1,10 +1,10 @@
 #include "Shape.h"
 
 
-Intersection Sphere::Intersect(csRay ray) {
+Intersection Sphere::Intersect(Ray ray) {
 	Intersection out;
 
-	vec3 Q = ray.pos - pos;
+	vec3 Q = ray.origin - pos;
 	float a = dot(ray.dir, ray.dir);
 	float b = 2.f * dot(Q, ray.dir);
 	float c = dot(Q, Q) - (r * r);
@@ -22,13 +22,13 @@ Intersection Sphere::Intersect(csRay ray) {
 
 
 
-Interval slabInterval(csRay ray, float d0, float d1, vec3 N) {
-	float t0 = -(d0 + dot(N, ray.pos)) / dot(N, ray.dir);
-	float t1 = -(d1 + dot(N, ray.pos)) / dot(N, ray.dir);
+Interval slabInterval(Ray ray, float d0, float d1, vec3 N) {
+	float t0 = -(d0 + dot(N, ray.origin)) / dot(N, ray.dir);
+	float t1 = -(d1 + dot(N, ray.origin)) / dot(N, ray.dir);
 	return Interval(t0, t1, -N, N);
 }
 
-Intersection Box::Intersect(csRay ray) {
+Intersection Box::Intersect(Ray ray) {
 	Intersection out;
 
 	Interval i1, i2, i3;
@@ -40,22 +40,22 @@ Intersection Box::Intersect(csRay ray) {
 	/*
 	{
 		vec3 N(1, 0, 0);
-		float t0 = -(-b.x + dot(N, ray.pos)) / dot(N, ray.dir);
-		float t1 = -((-b.x + -d.x) + dot(N, ray.pos)) / dot(N, ray.dir);
+		float t0 = -(-b.x + dot(N, ray.origin)) / dot(N, ray.dir);
+		float t1 = -((-b.x + -d.x) + dot(N, ray.origin)) / dot(N, ray.dir);
 		i1 = Interval(t0, t1, N, -N);
 	}
 
 	{
 		vec3 N(0, 1, 0);
-		float t0 = -(-b.y + dot(N, ray.pos)) / dot(N, ray.dir);
-		float t1 = -((-b.y + -d.y) + dot(N, ray.pos)) / dot(N, ray.dir);
+		float t0 = -(-b.y + dot(N, ray.origin)) / dot(N, ray.dir);
+		float t1 = -((-b.y + -d.y) + dot(N, ray.origin)) / dot(N, ray.dir);
 		i2 = Interval(t0, t1, N, -N);
 	}
 
 	{
 		vec3 N(0, 0, 1);
-		float t0 = -(-b.z + dot(N, ray.pos)) / dot(N, ray.dir);
-		float t1 = -((-b.z + -d.z) + dot(N, ray.pos)) / dot(N, ray.dir);
+		float t0 = -(-b.z + dot(N, ray.origin)) / dot(N, ray.dir);
+		float t1 = -((-b.z + -d.z) + dot(N, ray.origin)) / dot(N, ray.dir);
 		i3 = Interval(t0, t1, N, -N);
 	}
 	*/
@@ -87,7 +87,7 @@ Intersection Box::Intersect(csRay ray) {
 
 
 
-Intersection Cylinder::Intersect(csRay ray) {
+Intersection Cylinder::Intersect(Ray ray) {
 	// Intersection tmp;  return tmp;
 	Intersection out;
 	// return out;
@@ -100,16 +100,16 @@ Intersection Cylinder::Intersect(csRay ray) {
 	mat3 Rinv(B, C, A);
 	mat3 R = glm::transpose(Rinv);
 
-	vec3 Q = R * (ray.pos - base);
+	vec3 Q = R * (ray.origin - base);
 	vec3 D = R * ray.dir;
 
 	// zAxis = false;
 	if (zAxis) {
-		Q = ray.pos - base;
+		Q = ray.origin - base;
 		D = ray.dir;
 	}
 
-	csRay tRay(Q, D);
+	Ray tRay(Q, D);
 
 	Interval i1 = slabInterval(tRay, 0, -length(ang), { 0,0,1 });
 
@@ -119,8 +119,8 @@ Intersection Cylinder::Intersect(csRay ray) {
 		float d0 = 0;
 		float d1 = -length(ang);
 
-		float t0 = -(d0 + dot(N, ray.pos)) / dot(N, ray.dir);
-		float t1 = -(d1 + dot(N, ray.pos)) / dot(N, ray.dir);
+		float t0 = -(d0 + dot(N, ray.origin)) / dot(N, ray.dir);
+		float t1 = -(d1 + dot(N, ray.origin)) / dot(N, ray.dir);
 		i1 = Interval(t0, t1, N, -N);
 	}
 	*/
@@ -159,14 +159,14 @@ Intersection Cylinder::Intersect(csRay ray) {
 	return out;
 
 	/*
-	vec3 pos = ray.pos;
+	vec3 origin = ray.origin;
 	vec3 dir = ray.dir;
 	vec3 center = base;
 	float radius = radius;
 
 	float a = (dir.x * dir.x) + (dir.z * dir.z);
-	float b = 2 * (dir.x * (pos.x - center.x) + dir.z * (pos.z - center.z));
-	float c = (pos.x - center.x) * (pos.x - center.x) + (pos.z - center.z) * (pos.z - center.z) - (radius * radius);
+	float b = 2 * (dir.x * (origin.x - center.x) + dir.z * (origin.z - center.z));
+	float c = (origin.x - center.x) * (origin.x - center.x) + (origin.z - center.z) * (origin.z - center.z) - (radius * radius);
 
 	float delta = b * b - 4 * (a * c);
 	if (fabs(delta) < 0.001) return out;
@@ -179,7 +179,7 @@ Intersection Cylinder::Intersect(csRay ray) {
 	if (t1 > t2) t = t2;
 	else t = t1;
 
-	float r = pos.y + t * dir.y;
+	float r = origin.y + t * dir.y;
 
 	if ((r >= center.y) && (r <= center.y + length(ang))) out.addIntersect(t, this);
 
@@ -190,7 +190,7 @@ Intersection Cylinder::Intersect(csRay ray) {
 
 
 
-Intersection Triangle::Intersect(csRay ray) {
+Intersection Triangle::Intersect(Ray ray) {
 	Intersection out;
 
 
@@ -201,7 +201,7 @@ Intersection Triangle::Intersect(csRay ray) {
 
 	if (d == 0) { return out; }
 
-	glm::vec3 s = ray.pos - v0;
+	glm::vec3 s = ray.origin - v0;
 	float u = glm::dot(p, s) / d;
 
 	if (u < 0.f || u > 1.f) { return out; }

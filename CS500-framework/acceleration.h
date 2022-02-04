@@ -1,3 +1,5 @@
+#ifndef _ACC_H
+#define _ACC_H
 
 // This uses a library called bvh for a bounding volume hierarchy acceleration structure.
 // See https://github.com/madmann91/bvh
@@ -8,20 +10,20 @@
 // raytracer could be written to directly use bvh's version of these
 // structures.  This seems feasible, but has not been tested.
 
-#define ACCEL false
-#if ACCEL
-
+#include <optional>
 #include <bvh/bvh.hpp>
 #include <bvh/vector.hpp>
 #include <bvh/ray.hpp>
-#include <bvh/sweep_sah_builder.hpp>
-#include <bvh/single_ray_traverser.hpp>
-#include <bvh/primitive_intersectors.hpp>
 
-#include <glm/glm.hpp>
-
-using namespace glm;
-using namespace bvh;
+// FIX THIS:  Dummy ray to allow for compilation
+#include "Ray.h"
+/*
+class Ray { 
+public:
+    vec3 o, d;
+    Ray(const vec3 _o, const vec3 _d) : o(_o), d(_d) {}
+};
+*/
 
 // Vectors:
 // Expectation: The raytracer uses glm::vec3 throughout 
@@ -29,16 +31,14 @@ using namespace bvh;
 bvh::Vector3<float> vec3ToBvh(const vec3& v);
 vec3 vec3FromBvh(const bvh::Vector3<float>& v);
 
-// Rays:  Rays have an origin and a direction.  bvh::Ray also has a tmin and a tmax.
-// These convert between the two.
-bvh::Ray<float> RayToBvh(const Ray &r);
-Ray RayFromBvh(const bvh::Ray<float> &r);
-
 // Bounding boxes
 // Expectation: The raytracer uses SimpleBox throughout.
 // This class derives from the bvh bounding box, overloading two methods to take glm::vec3.
 // Use: Construct a BB with zero or one points (vec3), extend it with further points.
 //      Access its bounds as two bvh vectors box.min and box.max.
+bvh::Vector3<float> vec3ToBvh(const vec3& v);
+vec3 vec3FromBvh(const bvh::Vector3<float>& v);
+
 class SimpleBox: public bvh::BoundingBox<float> {
 public:
     SimpleBox();
@@ -46,6 +46,25 @@ public:
     SimpleBox& extend(const vec3 v);
 };
 
+// FIX THIS: 
+// Rays:  Rays have an origin and a direction.  bvh::Ray also has a tmin and a tmax.
+// Supply your own ray class and convert.
+bvh::Ray<float> RayToBvh(const Ray &r);
+Ray RayFromBvh(const bvh::Ray<float> &r);
+
+// FIX THIS:  This dummy Intersection record is defficient -- just barely enough to compile.
+/*
+class Intersection {
+public:
+    float t;
+    float distance() const { return t; }  // A function the BVH traversal needs to be supplied.
+};
+*/
+#include "Intersection.h"
+
+// FIX THIS; A dummy class -- just barely enough to compile.
+// class Shape;
+#include "Shape.h"
 
 // Wrapper of a single Shape*:
 
@@ -57,7 +76,7 @@ class BvhShape {
     Shape* shape;
 public:
     using ScalarType = float;   // Float or double for rays and vectors.
-    using IntersectionType = IntersectionRecord; // Specify the intersection record type.
+    using IntersectionType = Intersection; // Specify the intersection record type.
     
     BvhShape(Shape* s) : shape(s) { }; // Constructor given the Shape to wrap
     
@@ -66,10 +85,10 @@ public:
 
     // The intersection routine.
     // Given a bvh::Ray, intersect it with the shape and return either of:
-    //     an IntersectionRecord
+    //     an Intersection
     //         ( it exists, and is between the ray's tmin and tmax.
     //     std::nullopt ((otherwise)
-    std::optional<IntersectionRecord> intersect(const bvh::Ray<float>& bvhray) const;
+    std::optional<Intersection> intersect(const bvh::Ray<float>& bvhray) const;
 };
 
 // Encapsulates the BVH structure, the list of shapes it's built from,
@@ -80,7 +99,7 @@ class AccelerationBvh  {
     std::vector<BvhShape> shapeVector;
  public:
     AccelerationBvh(std::vector<Shape*> &objs);
-    IntersectionRecord intersect(const Ray& ray);
+    Intersection intersect(const Ray& ray);
 };
 
 #endif

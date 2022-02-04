@@ -71,7 +71,7 @@ protected:
     static void provideState(int pos);
     static void neglectState(int pos);
 
-    static void setStatePos(int pos); // sets thread local state pos used to state access within every instance
+    static void setStatePos(int pos); // sets thread local state origin used to state access within every instance
 
 protected:
     const char * m_name;
@@ -79,7 +79,7 @@ protected:
     mutable std::vector<State> m_states;
     
     // to reduce per instance hasState checks and provide/neglect states for all instances, 
-    // max pos is used to provide m_states size, which is identical for all instances.
+    // max origin is used to provide m_states size, which is identical for all instances.
     static int s_maxpos;
 };
 

@@ -68,6 +68,7 @@
       <DisableSpecificWarnings>4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <OpenMPSupport>true</OpenMPSupport>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>libs\assimp\lib\assimp.lib;libs\glfw-3.3.2.bin.WIN32\lib-vc2019\glfw3.lib;libs\glbinding.lib;gdi32.lib;winmm.lib;user32.lib;glu32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -99,6 +100,7 @@ xcopy .\libs\assimp\32\assimp.dll .\Debug/Y /D</Command>
       <OpenMPSupport>true</OpenMPSupport>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalOptions>/FS %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>libs\assimp\lib\assimp.lib;libs\glfw-3.3.2.bin.WIN32\lib-vc2019\glfw3.lib;libs\glbinding.lib;gdi32.lib;winmm.lib;user32.lib;glu32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -129,36 +131,10 @@ xcopy .\libs\assimp\32\assimp.dll .\Release /Y /D</Command>
     <ClCompile Include="rgbe.cpp" />
     <ClCompile Include="Shape.cpp" />
     <ClInclude Include="acceleration.h" />
-    <ClInclude Include="bvh\binned_sah_builder.hpp" />
-    <ClInclude Include="bvh\bottom_up_algorithm.hpp" />
-    <ClInclude Include="bvh\bounding_box.hpp" />
-    <ClInclude Include="bvh\bvh.hpp" />
-    <ClInclude Include="bvh\heuristic_primitive_splitter.hpp" />
-    <ClInclude Include="bvh\hierarchy_refitter.hpp" />
-    <ClInclude Include="bvh\leaf_collapser.hpp" />
-    <ClInclude Include="bvh\linear_bvh_builder.hpp" />
-    <ClInclude Include="bvh\locally_ordered_clustering_builder.hpp" />
-    <ClInclude Include="bvh\morton.hpp" />
-    <ClInclude Include="bvh\morton_code_based_builder.hpp" />
-    <ClInclude Include="bvh\node_intersectors.hpp" />
-    <ClInclude Include="bvh\node_layout_optimizer.hpp" />
-    <ClInclude Include="bvh\parallel_reinsertion_optimizer.hpp" />
-    <ClInclude Include="bvh\platform.hpp" />
-    <ClInclude Include="bvh\prefix_sum.hpp" />
-    <ClInclude Include="bvh\primitive_intersectors.hpp" />
-    <ClInclude Include="bvh\radix_sort.hpp" />
-    <ClInclude Include="bvh\ray.hpp" />
-    <ClInclude Include="bvh\sah_based_algorithm.hpp" />
-    <ClInclude Include="bvh\single_ray_traverser.hpp" />
-    <ClInclude Include="bvh\spatial_split_bvh_builder.hpp" />
-    <ClInclude Include="bvh\sphere.hpp" />
-    <ClInclude Include="bvh\sweep_sah_builder.hpp" />
-    <ClInclude Include="bvh\top_down_builder.hpp" />
-    <ClInclude Include="bvh\triangle.hpp" />
-    <ClInclude Include="bvh\utilities.hpp" />
-    <ClInclude Include="bvh\vector.hpp" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Intersection.h" />
     <ClInclude Include="Ray.h" />
+    <ClInclude Include="raytrace.h" />
     <ClInclude Include="realtime.h" />
     <ClInclude Include="geom.h" />
     <ClInclude Include="Shape.h" />
