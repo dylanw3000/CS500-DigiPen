@@ -56,8 +56,10 @@ SimpleBox BvhShape::bounding_box() const
 
     if (dynamic_cast<Sphere*>(shape) != nullptr) {
         Sphere* s = static_cast<Sphere*>(shape);
+        
         out = SimpleBox(s->pos - vec3(1.f)*s->r);
         out.extend(s->pos + vec3(1.f)*s->r);
+        
     }
     else if (dynamic_cast<Box*>(shape) != nullptr) {
         Box* b = static_cast<Box*>(shape);
@@ -77,9 +79,11 @@ SimpleBox BvhShape::bounding_box() const
     }
     else if (dynamic_cast<Triangle*>(shape) != nullptr) {
         Triangle* t = static_cast<Triangle*>(shape);
+        
         out = SimpleBox(t->v0);
         out.extend(t->v1);
         out.extend(t->v2);
+        
     }
 
     return out;
@@ -103,7 +107,10 @@ std::optional<Intersection> BvhShape::intersect(const bvh::Ray<float>& bvhray) c
     // return Intersection();  // FIX THIS 
 
     Intersection out = shape->Intersect(RayFromBvh(bvhray));
-    if (out.collision) return out;
+    if (out.collision) {
+        if(out.t < bvhray.tmin || out.t > bvhray.tmax) return std::nullopt;
+        return out;
+    }
     return std::nullopt;
 }
 

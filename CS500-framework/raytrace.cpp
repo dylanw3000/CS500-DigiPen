@@ -217,12 +217,13 @@ void Scene::TraceImage(Color* image, const int pass)
             */
 
             if (front.object != nullptr) {
+                /*
                 float t = (front.t - 5.f) / 4.f;
                 color = Color(t, t, t);
                 color = Color(front.object->mat->Kd);
-
-                
                 color = Color(abs(front.N));
+                */
+
                 vec3 lightPos(1.9, 5, 2);
                 vec3 lightColor(3, 3, 3);
 

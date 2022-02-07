@@ -1,8 +1,13 @@
 #include "Shape.h"
 
+#define BOUNDINGBOX true
 
 Intersection Sphere::Intersect(Ray ray) {
 	Intersection out;
+	if (false) {
+		out.addIntersect(this, 0, ray.eval(0), vec3(0, 1, 0));
+		return out;
+	}
 
 	vec3 Q = ray.origin - pos;
 	float a = dot(ray.dir, ray.dir);
@@ -23,13 +28,24 @@ Intersection Sphere::Intersect(Ray ray) {
 
 
 Interval slabInterval(Ray ray, float d0, float d1, vec3 N) {
-	float t0 = -(d0 + dot(N, ray.origin)) / dot(N, ray.dir);
-	float t1 = -(d1 + dot(N, ray.origin)) / dot(N, ray.dir);
+	float denom = dot(N, ray.dir);
+	if (abs(denom) < 0.001f) {
+		Interval i;
+		i.empty();
+		return i;
+	}
+	float t0 = -(d0 + dot(N, ray.origin)) / denom;
+	float t1 = -(d1 + dot(N, ray.origin)) / denom;
 	return Interval(t0, t1, -N, N);
 }
 
 Intersection Box::Intersect(Ray ray) {
 	Intersection out;
+
+	if (false) {
+		out.addIntersect(this, 2, ray.eval(2), vec3(0, 1, 0));
+		return out;
+	}
 
 	Interval i1, i2, i3;
 
@@ -59,6 +75,10 @@ Intersection Box::Intersect(Ray ray) {
 		i3 = Interval(t0, t1, N, -N);
 	}
 	*/
+
+	if (i1.t0 > i1.t1 || i2.t0 > i2.t1 || i3.t0 > i3.t1) {
+		return out;
+	}
 
 	Interval* tmin = &i1;
 	if (i2.t0 > tmin->t0) tmin = &i2;
@@ -90,7 +110,11 @@ Intersection Box::Intersect(Ray ray) {
 Intersection Cylinder::Intersect(Ray ray) {
 	// Intersection tmp;  return tmp;
 	Intersection out;
-	// return out;
+	
+	if (false) {
+		out.addIntersect(this, 2.f, ray.eval(2.f), vec3(0, 1, 0));
+		return out;
+	}
 
 	vec3 A = normalize(ang);
 	bool zAxis = (A == vec3(0, 0, 1));
@@ -112,6 +136,9 @@ Intersection Cylinder::Intersect(Ray ray) {
 	Ray tRay(Q, D);
 
 	Interval i1 = slabInterval(tRay, 0, -length(ang), { 0,0,1 });
+	if (i1.t0 > i1.t1) {
+		return out;
+	}
 
 	/*
 	{

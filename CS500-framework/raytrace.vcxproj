@@ -127,7 +127,6 @@ xcopy .\libs\assimp\32\assimp.dll .\Release /Y /D</Command>
     <ClCompile Include="geom.cpp" />
     <ClCompile Include="raytrace.cpp" />
     <ClCompile Include="readAssimpFile.cpp" />
-    <ClCompile Include="realtime.cpp" />
     <ClCompile Include="rgbe.cpp" />
     <ClCompile Include="Shape.cpp" />
     <ClInclude Include="acceleration.h" />
@@ -135,7 +134,6 @@ xcopy .\libs\assimp\32\assimp.dll .\Release /Y /D</Command>
     <ClInclude Include="Intersection.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="raytrace.h" />
-    <ClInclude Include="realtime.h" />
     <ClInclude Include="geom.h" />
     <ClInclude Include="Shape.h" />
   </ItemGroup>
