@@ -63,14 +63,14 @@ void ReadScene(const std::string inName, Scene* scene)
 
 // Write the image as a HDR(RGBE) image.  
 #include "rgbe.h"
-void WriteHdrImage(const std::string outName, const int width, const int height, Color* image)
+void WriteHdrImage(const std::string outName, const int width, const int height, Color* image, int pass)
 {
     // Turn image from a 2D-bottom-up array of Vector3D to an top-down-array of floats
     float* data = new float[width*height*3];
     float* dp = data;
     for (int y=height-1;  y>=0;  --y) {
         for (int x=0;  x<width;  ++x) {
-            Color pixel = image[y*width + x];
+            Color pixel = image[y*width + x] / float(pass);
             *dp++ = pixel[0];
             *dp++ = pixel[1];
             *dp++ = pixel[2]; } }
@@ -116,9 +116,25 @@ int main(int argc, char** argv)
             image[y*scene->width + x] = Color(0,0,0);
 
     // RayTrace the image
-    scene->TraceImage(image, 1);
 
-    // Write the image
-    WriteHdrImage(hdrName, scene->width, scene->height, image);
+    int maxPass = 8192;
+    for (int pass = 0; pass < maxPass; pass++) {
+        scene->TraceImage(image, pass);
+
+        if (pass > 0 && 
+            (
+                (pass % 16 == 0 && pass < 128)
+                || (pass % 64 == 0 && pass < 512)
+                || pass % 256 == 0
+                || pass == 1 || pass == 8
+            )
+        ) {
+            // Write the image
+            WriteHdrImage(to_string(pass) + hdrName, scene->width, scene->height, image, pass);
+            fprintf(stderr, "\n");
+        }
+    }
+    WriteHdrImage(hdrName, scene->width, scene->height, image, maxPass);
+    fprintf(stderr, "\n");
 
 }

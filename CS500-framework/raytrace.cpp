@@ -20,12 +20,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-// A good quality *thread-safe* Mersenne Twister random number generator.
-#include <random>
-std::random_device device;
-std::mt19937_64 RNGen(device());
-std::uniform_real_distribution<> myrandom(0.0, 1.0);
-// Call myrandom(RNGen) to get a uniformly distributed random number in [0,1].
+#include "Random.h"
 
 Scene::Scene()
 {
@@ -34,6 +29,15 @@ Scene::Scene()
 
 void Scene::Finit()
 {
+    std::cout << "vectorOfShapes size: " << vectorOfShapes.size() << std::endl;
+
+    for (auto shape : vectorOfShapes) {
+        if (shape->mat->isLight()) {
+            vectorOfLights.push_back(shape);
+        }
+    }
+    std::cout << "vectorOfLights size: " << vectorOfLights.size() << std::endl;
+
     bvh = new AccelerationBvh(vectorOfShapes);
 }
 
@@ -168,12 +172,138 @@ void Scene::Command(const std::vector<std::string>& strings,
     }
 }
 
+
+
+Intersection Sphere::SampleSphere(vec3 C, float R) {
+    float m1 = myrandom(RNGen);
+    float m2 = myrandom(RNGen);
+    float z = 2.f * m1 - 1.f;
+    float r = sqrtf(1.f - z * z);
+    float a = 2 * PI * m2;
+
+    Intersection out;
+    vec3 N = normalize(vec3(r * cosf(a), r * sinf(a), z));
+    out.addIntersect(this, 0.f, C + R * N, N);
+    return out;
+}
+
+Intersection Scene::SampleLight() {
+    Intersection Q;
+    if (vectorOfLights.size() == 0) return Q;
+
+    // TODO select light randomly (uniformly) ; currently hardcoded
+    Shape* shape = vectorOfLights[0];
+    
+
+    if(dynamic_cast<Sphere*>(shape) != nullptr) {
+        Sphere* s = static_cast<Sphere*>(shape);
+        Q = s->SampleSphere(s->pos, s->radius);
+    }
+
+    return Q;
+}
+
+vec3 SampleLobe(vec3 A, float c, float phi) {
+    float s = sqrtf(1.f - c * c);
+
+    vec3 K(s * cosf(phi), s * sinf(phi), c);
+    if (fabs(A.z - 1.f) < 10E-3) return K;
+    if (fabs(A.z + 1.f) < 10E-3) return K;
+
+    A = normalize(A);
+    vec3 B = normalize(vec3(-A.y, A.x, 0.f));
+    vec3 C = cross(A, B);
+
+    return K.x*B + K.y*C + K.z*A;
+}
+
+vec3 SampleBrdf(vec3 N) {
+    float m1 = myrandom(RNGen);
+    float m2 = myrandom(RNGen);
+    return SampleLobe(N, sqrtf(m1), 2.f * PI * m2);
+}
+
+vec3 Intersection::EvalScattering(vec3 N, vec3 wi) {
+    return fabs(dot(N, wi)) * object->mat->Kd / PI;
+}
+
+float PdfBrdf(vec3 N, vec3 wi) {
+    return length(dot(N, wi)) / PI;
+}
+
+float Scene::PdfLight(Intersection L) {
+    if (dynamic_cast<Sphere*>(L.object) != nullptr) {
+        Sphere* s = static_cast<Sphere*>(L.object);
+        return 1.f / (4.f * PI * powf(s->radius, 2) * vectorOfLights.size());
+    }
+    return 0.f;
+}
+
+vec3 EvalRadiance(Intersection Q) {
+    if(Q.object->mat->isLight()) return Q.object->mat->Kd;
+    return vec3(0.f);
+}
+
+float GeometryFactor(Intersection A, Intersection B) {
+    vec3 D = A.P - B.P;
+    return fabsf( dot(A.N, D) * dot(B.N, D) / pow2(dot(D, D)));
+}
+
+
+
+vec3 Scene::TracePath(Ray ray) {
+    vec3 C(0, 0, 0);
+    vec3 W(1, 1, 1);
+
+    Intersection P = bvh->intersect(ray);
+    vec3 N = P.N;
+    
+    if (!P.collision) return C;
+    if (P.object->mat->isLight()) return P.object->mat->Kd;     // TODO evalRadiance(P)
+    
+    // while russian roulette
+    float russianRoulette = 0.8f;
+
+    while (myrandom(RNGen) <= russianRoulette) {
+        N = P.N;
+        vec3 wi = SampleBrdf(N);
+
+
+        Intersection L = SampleLight();
+        float p = PdfLight(L) / GeometryFactor(P, L);
+        Intersection I = bvh->intersect(Ray(P.P, normalize(L.P - P.P)));
+        if (p > 0.f && I.collision && distance(I.P, L.P) < 10E-3) {
+            vec3 f = P.EvalScattering(N, wi);
+            C += 0.5f * W * f / p * EvalRadiance(L);
+        }
+        
+
+        
+        Ray t(P.P, wi);
+        Intersection Q = bvh->intersect(t);
+        if (!Q.collision) break;
+        
+        vec3 f = P.EvalScattering(N, wi);
+        p = PdfBrdf(N, wi) * russianRoulette;
+        if (p < 10E-6) break;
+
+        W *= f / p;
+
+        if (Q.object->mat->isLight()) {
+            C += 0.5f * W * EvalRadiance(Q);
+            break;
+        }
+
+        P = Q;
+    }
+
+    return C;
+}
+
+
+
 void Scene::TraceImage(Color* image, const int pass)
 {
-    // realtime->run();                          // Remove this (realtime stuff)
-
-    std::cout << "vectorOfShapes size: " << vectorOfShapes.size() << std::endl;
-
     float rx = camera->ry * float(width) / float(height);
 
     glm::vec3 X, Y, Z;
@@ -181,68 +311,66 @@ void Scene::TraceImage(Color* image, const int pass)
     Y = camera->ry * transformVector(camera->orient, Yaxis());
     Z = transformVector(camera->orient, Zaxis());
 
+    // for(int p=0; p<pass; p++){
 #pragma omp parallel for schedule(dynamic, 1) // Magic: Multi-thread y loop
-    for (int y = 0; y < height; y++) {
+        for (int y = 0; y < height; y++) {
 
-        fprintf(stderr, "Rendering %4d\r", y);
-        for (int x = 0; x < width; x++) {
-            Color color = Color(0, 0, 0);
+            fprintf(stderr, "Rendering %4d %4d\r", y, pass);
+            for (int x = 0; x < width; x++) {
+                Color color = Color(0, 0, 0);
 
-            float dx = 2.f * (float(x) + 0.5f) / float(width) - 1;
-            float dy = 2.f * (float(y) + 0.5f) / float(height) - 1;
+                float dx = 2.f * (float(x) + myrandom(RNGen)) / float(width) - 1;
+                float dy = 2.f * (float(y) + myrandom(RNGen)) / float(height) - 1;
+                // myrandom(RNGen)
 
-            Intersection front, current;
-            front.t = INFINITY;
-            Ray ray(camera->eye, glm::normalize(dx * X + dy * Y - Z));
+                Intersection front, current;
+                front.t = INFINITY;
+                Ray ray(camera->eye, glm::normalize(dx * X + dy * Y - Z));
 
-            /*
-            for (auto shape : vectorOfShapes) {
-                current = shape->Intersect(ray);
-                if (current.collision && (!front.collision || current.t < front.t)) {
-                    front = current;
-                }
-            }
-            */
+                image[y * width + x] += TracePath(ray);
 
-            front = bvh->intersect(ray);
-
-
-            /*
-            if ((x-width/2)*(x-width/2)+(y-height/2)*(y-height/2) < 100*100)
-                color = Color(myrandom(RNGen), myrandom(RNGen), myrandom(RNGen));
-            else if (abs(x-width/2)<4 || abs(y-height/2)<4)
-                color = Color(0.0, 0.0, 0.0);
-            else
-                color = Color(1.0, 1.0, 1.0);
-            */
-
-            if (front.object != nullptr) {
+#if false
                 /*
-                float t = (front.t - 5.f) / 4.f;
-                color = Color(t, t, t);
-                color = Color(front.object->mat->Kd);
-                color = Color(abs(front.N));
+                for (auto shape : vectorOfShapes) {
+                    current = shape->Intersect(ray);
+                    if (current.collision && (!front.collision || current.t < front.t)) {
+                        front = current;
+                    }
+                }
                 */
 
-                vec3 lightPos(1.9, 5, 2);
-                vec3 lightColor(3, 3, 3);
+                front = bvh->intersect(ray);
 
-                vec3 N = normalize(front.N);
-                vec3 E = normalize(camera->eye - front.P);
+                if (front.object != nullptr) {
+                    /*
+                    float t = (front.t - 5.f) / 4.f;
+                    color = Color(t, t, t);
+                    color = Color(front.object->mat->Kd);
+                    color = Color(abs(front.N));
+                    */
 
-                vec3 L = normalize(lightPos - front.P);
-                vec3 H = normalize(L + E);
+                    vec3 lightPos(1.9, 5, 2);
+                    vec3 lightColor(3, 3, 3);
 
-                float NL = max(0.1f, dot(N, L));
-                float HN = max(0.f, dot(H, N));
+                    vec3 N = normalize(front.N);
+                    vec3 E = normalize(camera->eye - front.P);
 
-                float alpha = front.object->mat->alpha;
-                color = Color(lightColor * (front.object->mat->Kd * NL / 3.14f + alpha / 6.28f * front.object->mat->Ks * pow(HN, alpha)));
-                
+                    vec3 L = normalize(lightPos - front.P);
+                    vec3 H = normalize(L + E);
+
+                    float NL = max(0.1f, dot(N, L));
+                    float HN = max(0.f, dot(H, N));
+
+                    float alpha = front.object->mat->alpha;
+                    // color = Color(lightColor * (front.object->mat->Kd * NL / 3.14f + alpha / 6.28f * front.object->mat->Ks * pow(HN, alpha)));
+                    color = Color(lightColor * (front.object->mat->Kd * NL / 3.14f));
+
+                }
+
+                image[y * width + x] += color;
+#endif
             }
-
-            image[y * width + x] = color;
         }
-    }
-    fprintf(stderr, "\n");
+    // }
+    // fprintf(stderr, "\n");
 }

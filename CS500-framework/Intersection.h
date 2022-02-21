@@ -24,4 +24,7 @@ public:
 	bool collision = false;
 	glm::vec3 P;
 	glm::vec3 N;
+	bool isLight = false;
+
+	vec3 EvalScattering(vec3 N, vec3 wi);
 };

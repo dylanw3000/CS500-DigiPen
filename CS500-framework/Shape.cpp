@@ -12,7 +12,7 @@ Intersection Sphere::Intersect(Ray ray) {
 	vec3 Q = ray.origin - pos;
 	float a = dot(ray.dir, ray.dir);
 	float b = 2.f * dot(Q, ray.dir);
-	float c = dot(Q, Q) - (r * r);
+	float c = dot(Q, Q) - (radius * radius);
 
 	float discriminant = b * b - 4 * a * c;
 	if (discriminant >= 0) {
@@ -24,6 +24,8 @@ Intersection Sphere::Intersect(Ray ray) {
 
 	return out;
 }
+
+
 
 
 
@@ -52,29 +54,6 @@ Intersection Box::Intersect(Ray ray) {
 	i1 = slabInterval(ray, -b.x, -b.x - d.x, { 1,0,0 });
 	i2 = slabInterval(ray, -b.y, -b.y - d.y, { 0,1,0 });
 	i3 = slabInterval(ray, -b.z, -b.z - d.z, { 0,0,1 });
-
-	/*
-	{
-		vec3 N(1, 0, 0);
-		float t0 = -(-b.x + dot(N, ray.origin)) / dot(N, ray.dir);
-		float t1 = -((-b.x + -d.x) + dot(N, ray.origin)) / dot(N, ray.dir);
-		i1 = Interval(t0, t1, N, -N);
-	}
-
-	{
-		vec3 N(0, 1, 0);
-		float t0 = -(-b.y + dot(N, ray.origin)) / dot(N, ray.dir);
-		float t1 = -((-b.y + -d.y) + dot(N, ray.origin)) / dot(N, ray.dir);
-		i2 = Interval(t0, t1, N, -N);
-	}
-
-	{
-		vec3 N(0, 0, 1);
-		float t0 = -(-b.z + dot(N, ray.origin)) / dot(N, ray.dir);
-		float t1 = -((-b.z + -d.z) + dot(N, ray.origin)) / dot(N, ray.dir);
-		i3 = Interval(t0, t1, N, -N);
-	}
-	*/
 
 	if (i1.t0 > i1.t1 || i2.t0 > i2.t1 || i3.t0 > i3.t1) {
 		return out;
@@ -108,7 +87,6 @@ Intersection Box::Intersect(Ray ray) {
 
 
 Intersection Cylinder::Intersect(Ray ray) {
-	// Intersection tmp;  return tmp;
 	Intersection out;
 	
 	if (false) {
@@ -184,35 +162,6 @@ Intersection Cylinder::Intersect(Ray ray) {
 	}
 
 	return out;
-
-	/*
-	vec3 origin = ray.origin;
-	vec3 dir = ray.dir;
-	vec3 center = base;
-	float radius = radius;
-
-	float a = (dir.x * dir.x) + (dir.z * dir.z);
-	float b = 2 * (dir.x * (origin.x - center.x) + dir.z * (origin.z - center.z));
-	float c = (origin.x - center.x) * (origin.x - center.x) + (origin.z - center.z) * (origin.z - center.z) - (radius * radius);
-
-	float delta = b * b - 4 * (a * c);
-	if (fabs(delta) < 0.001) return out;
-	if (delta < 0.0) return out;
-
-	float t1 = (-b - sqrt(delta)) / (2 * a);
-	float t2 = (-b + sqrt(delta)) / (2 * a);
-	float t;
-
-	if (t1 > t2) t = t2;
-	else t = t1;
-
-	float r = origin.y + t * dir.y;
-
-	if ((r >= center.y) && (r <= center.y + length(ang))) out.addIntersect(t, this);
-
-	return out;
-	*/
-
 }
 
 

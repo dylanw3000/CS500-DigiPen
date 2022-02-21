@@ -58,27 +58,33 @@ struct Intersection {
 class SimpleBox;
 
 
+
+
+
 class Shape {
 public:
 	Shape() {}
 	virtual Intersection Intersect(Ray ray) = 0;
 	// virtual void bvhBox() = 0;
 	Material* mat;
+	vec3 EvalScattering(vec3 N, vec3 wi);
 };
 
 
 
 class Sphere : public Shape {
 public:
-	Sphere(glm::vec3 _pos, float _r, Material* _mat) : pos(_pos), r(_r) {
+	Sphere(glm::vec3 _pos, float _r, Material* _mat) : pos(_pos), radius(_r) {
 		mat = _mat;
 	}
 
 	Intersection Intersect(Ray ray);
 
 	glm::vec3 pos;
-	float r;
+	float radius;
 	// Material* mat;
+
+	Intersection SampleSphere(vec3 C, float R);
 };
 
 

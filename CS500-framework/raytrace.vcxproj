@@ -132,6 +132,7 @@ xcopy .\libs\assimp\32\assimp.dll .\Release /Y /D</Command>
     <ClInclude Include="acceleration.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Intersection.h" />
+    <ClInclude Include="Random.h" />
     <ClInclude Include="Ray.h" />
     <ClInclude Include="raytrace.h" />
     <ClInclude Include="geom.h" />

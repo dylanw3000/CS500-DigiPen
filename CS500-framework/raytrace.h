@@ -82,6 +82,7 @@ public:
 
     Camera* camera;
     std::vector<Shape*> vectorOfShapes;
+    std::vector<Shape*> vectorOfLights;
 
     vec3 ambient;
 
@@ -105,4 +106,9 @@ public:
     // The main program will call the TraceImage method to generate
     // and return the image.  This is the Ray Tracer!
     void TraceImage(Color* image, const int pass);
+    vec3 TracePath(Ray ray);
+
+    // Intersection SampleSphere(vec3 C, float R);
+    Intersection SampleLight();
+    float PdfLight(Intersection Q);
 };
