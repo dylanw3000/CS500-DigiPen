@@ -26,5 +26,12 @@ public:
 	glm::vec3 N;
 	bool isLight = false;
 
-	vec3 EvalScattering(vec3 N, vec3 wi);
+	vec3 EvalScattering(vec3 wo, vec3 N, vec3 wi);
+	vec3 SampleBrdf(vec3 wo, vec3 N);
+	float PdfBrdf(vec3 wo, vec3 N, vec3 wi);
+
+	vec3 F(float d);
+	float D(vec3 m);
+	float Intersection::G(vec3 wi, vec3 wo, vec3 m);
+	float Intersection::G1(vec3 v, vec3 m);
 };

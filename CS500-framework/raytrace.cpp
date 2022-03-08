@@ -217,18 +217,65 @@ vec3 SampleLobe(vec3 A, float c, float phi) {
     return K.x*B + K.y*C + K.z*A;
 }
 
-vec3 SampleBrdf(vec3 N) {
+vec3 Intersection::SampleBrdf(vec3 wo, vec3 N) {
     float m1 = myrandom(RNGen);
     float m2 = myrandom(RNGen);
-    return SampleLobe(N, sqrtf(m1), 2.f * PI * m2);
+    if (myrandom(RNGen) < object->mat->Pd) {
+        return SampleLobe(N, sqrtf(m1), 2.f * PI * m2);
+    }
+    vec3 m = SampleLobe(N, powf(m1, 1.f / (object->mat->alpha + 1)), 2.f * PI * m2);
+    return 2.f * fabs(dot(wo, m)) * m - wo;
 }
 
-vec3 Intersection::EvalScattering(vec3 N, vec3 wi) {
-    return fabs(dot(N, wi)) * object->mat->Kd / PI;
+
+
+vec3 Intersection::F(float d) {
+    return object->mat->Ks + (vec3(1.f) - object->mat->Ks) * powf(1 - abs(d), 5);
 }
 
-float PdfBrdf(vec3 N, vec3 wi) {
-    return length(dot(N, wi)) / PI;
+float Xp(float d) {
+    if (d > 0) return 1;
+    return 0;
+}
+
+float Intersection::D(vec3 m) {
+    return Xp(dot(m, N)) * (object->mat->alpha + 2) / (2 * PI) * powf(dot(m, N), object->mat->alpha);
+}
+
+float Intersection::G1(vec3 v, vec3 m) {
+    float d = dot(v, N);
+    if (d > 1.f) return 1;
+
+    float theta = sqrtf(1 - pow(d, 2)) / d;
+    if (fabs(theta) == 0) return 1;
+
+    float x = Xp(dot(v, m) / dot(v, N));
+    float a = sqrtf(object->mat->alpha / 2 + 1) / theta;
+    if (a < 1.6) {
+        return x * (3.535*a + 2.181*a*a) / (1 + 2.276*a + 2.577*a*a);
+    }
+    return x;
+}
+
+float Intersection::G(vec3 wi, vec3 wo, vec3 m) {
+    return G1(wi, m) * G1(wo, m);
+}
+
+vec3 Intersection::EvalScattering(vec3 wo, vec3 N, vec3 wi) {
+    vec3 m = normalize(wo + wi);
+    vec3 Ed = object->mat->Kd / PI;
+    vec3 Er = D(m) * G(wi, wo, m) * F(dot(wi, m)) / (4 * fabs(dot(wi, N)) * fabs(dot(wo, N)));
+    return fabs(dot(N, wi)) * (Ed + Er);
+}
+
+
+
+float Intersection::PdfBrdf(vec3 wo, vec3 N, vec3 wi) {
+    vec3 m = normalize(wo + wi);
+    float pd = fabs(dot(wi, N)) / PI;
+    float pr = D(m) * fabs(dot(m, N)) / (4 * fabs(dot(wi, m)));
+    return pd * object->mat->Pd + pr * object->mat->Pr;
+    // return length(dot(N, wi)) / PI;
 }
 
 float Scene::PdfLight(Intersection L) {
@@ -259,42 +306,50 @@ vec3 Scene::TracePath(Ray ray) {
     vec3 N = P.N;
     
     if (!P.collision) return C;
-    if (P.object->mat->isLight()) return P.object->mat->Kd;     // TODO evalRadiance(P)
+    if (P.object->mat->isLight()) return EvalRadiance(P);
+
+    vec3 wo = -ray.dir;
     
     // while russian roulette
     float russianRoulette = 0.8f;
 
     while (myrandom(RNGen) <= russianRoulette) {
-        N = P.N;
-        vec3 wi = SampleBrdf(N);
 
-
+        // Explicit Light connection
         Intersection L = SampleLight();
         float p = PdfLight(L) / GeometryFactor(P, L);
+        vec3 wi = normalize(L.P - P.P);
         Intersection I = bvh->intersect(Ray(P.P, normalize(L.P - P.P)));
         if (p > 0.f && I.collision && distance(I.P, L.P) < 10E-3) {
-            vec3 f = P.EvalScattering(N, wi);
+            vec3 f = P.EvalScattering(wo, N, wi);
             C += 0.5f * W * f / p * EvalRadiance(L);
         }
         
 
-        
+        // Extend Path
+        wi = P.SampleBrdf(wo, N);
         Ray t(P.P, wi);
         Intersection Q = bvh->intersect(t);
         if (!Q.collision) break;
         
-        vec3 f = P.EvalScattering(N, wi);
-        p = PdfBrdf(N, wi) * russianRoulette;
+        vec3 f = P.EvalScattering(wo, N, wi);
+        p = P.PdfBrdf(wo, N, wi) * russianRoulette;
         if (p < 10E-6) break;
 
         W *= f / p;
 
+
+        // Implicit Light Connection
         if (Q.object->mat->isLight()) {
             C += 0.5f * W * EvalRadiance(Q);
             break;
         }
 
+
+        // Step Forward
         P = Q;
+        N = P.N;
+        wo = -wi;
     }
 
     return C;
@@ -327,48 +382,9 @@ void Scene::TraceImage(Color* image, const int pass)
                 front.t = INFINITY;
                 Ray ray(camera->eye, glm::normalize(dx * X + dy * Y - Z));
 
-                image[y * width + x] += TracePath(ray);
-
-#if false
-                /*
-                for (auto shape : vectorOfShapes) {
-                    current = shape->Intersect(ray);
-                    if (current.collision && (!front.collision || current.t < front.t)) {
-                        front = current;
-                    }
-                }
-                */
-
-                front = bvh->intersect(ray);
-
-                if (front.object != nullptr) {
-                    /*
-                    float t = (front.t - 5.f) / 4.f;
-                    color = Color(t, t, t);
-                    color = Color(front.object->mat->Kd);
-                    color = Color(abs(front.N));
-                    */
-
-                    vec3 lightPos(1.9, 5, 2);
-                    vec3 lightColor(3, 3, 3);
-
-                    vec3 N = normalize(front.N);
-                    vec3 E = normalize(camera->eye - front.P);
-
-                    vec3 L = normalize(lightPos - front.P);
-                    vec3 H = normalize(L + E);
-
-                    float NL = max(0.1f, dot(N, L));
-                    float HN = max(0.f, dot(H, N));
-
-                    float alpha = front.object->mat->alpha;
-                    // color = Color(lightColor * (front.object->mat->Kd * NL / 3.14f + alpha / 6.28f * front.object->mat->Ks * pow(HN, alpha)));
-                    color = Color(lightColor * (front.object->mat->Kd * NL / 3.14f));
-
-                }
-
-                image[y * width + x] += color;
-#endif
+                Color C = TracePath(ray);
+                if (all(isnan(C)) || all(isinf(C))) continue;
+                image[y * width + x] += C;
             }
         }
     // }

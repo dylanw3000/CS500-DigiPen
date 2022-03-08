@@ -125,6 +125,7 @@ xcopy .\libs\assimp\32\assimp.dll .\Release /Y /D</Command>
     <ClCompile Include="acceleration.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="geom.cpp" />
+    <ClCompile Include="RayBounce.cpp" />
     <ClCompile Include="raytrace.cpp" />
     <ClCompile Include="readAssimpFile.cpp" />
     <ClCompile Include="rgbe.cpp" />

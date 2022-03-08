@@ -22,12 +22,17 @@ public:
     float alpha;
     unsigned int texid;
 
+    float s;
+    float Pd, Pr;
+
     virtual bool isLight() { return false; }
 
-    Material() : Kd(vec3(1.0, 0.5, 0.0)), Ks(vec3(1, 1, 1)), alpha(1.0), texid(0) {}
-    Material(const vec3 d, const vec3 s, const float a)
-        : Kd(d), Ks(s), alpha(a), texid(0) {}
-    Material(Material& o) { Kd = o.Kd;  Ks = o.Ks;  alpha = o.alpha;  texid = o.texid; }
+    Material() : Kd(vec3(1.0, 0.5, 0.0)), Ks(vec3(1, 1, 1)), alpha(1.0), texid(0) { s = length(Kd) + length(Ks); Pd = length(Kd) / s; Pr = length(Ks) / s; }
+    Material(const vec3 d, const vec3 s_, const float a)
+        : Kd(d), Ks(s_), alpha(a), texid(0) {
+        s = length(Kd) + length(Ks); Pd = length(Kd) / s; Pr = length(Ks) / s;
+    }
+    Material(Material& o) { Kd = o.Kd;  Ks = o.Ks;  alpha = o.alpha;  texid = o.texid; s = length(Kd) + length(Ks); Pd = length(Kd) / s; Pr = length(Ks) / s; }
 
     //virtual void apply(const unsigned int program);
 };
