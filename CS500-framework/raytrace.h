@@ -22,17 +22,20 @@ public:
     float alpha;
     unsigned int texid;
 
-    float s;
     float Pd, Pr;
 
     virtual bool isLight() { return false; }
 
-    Material() : Kd(vec3(1.0, 0.5, 0.0)), Ks(vec3(1, 1, 1)), alpha(1.0), texid(0) { s = length(Kd) + length(Ks); Pd = length(Kd) / s; Pr = length(Ks) / s; }
+    Material() : Kd(vec3(1.0, 0.5, 0.0)), Ks(vec3(1, 1, 1)), alpha(1.0), texid(0) { Pd = length(Kd) / (length(Kd) + length(Ks)); Pr = length(Ks) / (length(Kd) + length(Ks)); }
     Material(const vec3 d, const vec3 s_, const float a)
         : Kd(d), Ks(s_), alpha(a), texid(0) {
-        s = length(Kd) + length(Ks); Pd = length(Kd) / s; Pr = length(Ks) / s;
+        Pd = length(Kd) / (length(Kd) + length(Ks)); Pr = length(Ks) / (length(Kd) + length(Ks));
+        // std::cout << "Kd: " << length(Kd) << ", Ks: " << length(Ks) << ", Pd: " << Pd << std::endl;
     }
-    Material(Material& o) { Kd = o.Kd;  Ks = o.Ks;  alpha = o.alpha;  texid = o.texid; s = length(Kd) + length(Ks); Pd = length(Kd) / s; Pr = length(Ks) / s; }
+    Material(Material& o) { 
+        Kd = o.Kd;  Ks = o.Ks;  alpha = o.alpha;  texid = o.texid; Pd = length(Kd) / (length(Kd) + length(Ks)); Pr = length(Ks) / (length(Kd) + length(Ks)); 
+        // std::cout << Pd << std::endl; 
+    }
 
     //virtual void apply(const unsigned int program);
 };
