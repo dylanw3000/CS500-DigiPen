@@ -4,10 +4,6 @@
 
 Intersection Sphere::Intersect(Ray ray) {
 	Intersection out;
-	if (false) {
-		out.addIntersect(this, 0, ray.eval(0), vec3(0, 1, 0));
-		return out;
-	}
 
 	vec3 Q = ray.origin - pos;
 	float a = dot(ray.dir, ray.dir);

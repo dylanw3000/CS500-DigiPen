@@ -18,23 +18,43 @@ const float Radians = PI / 180.0f;    // Convert degrees to radians
 class Material
 {
 public:
-    vec3 Kd, Ks;
+    vec3 Kd, Ks, Kt;
     float alpha;
     unsigned int texid;
 
-    float Pd, Pr;
+    float Pd, Pr, Pt;
+    float IoR = 1.f;
 
     virtual bool isLight() { return false; }
 
     Material() : Kd(vec3(1.0, 0.5, 0.0)), Ks(vec3(1, 1, 1)), alpha(1.0), texid(0) { Pd = length(Kd) / (length(Kd) + length(Ks)); Pr = length(Ks) / (length(Kd) + length(Ks)); }
-    Material(const vec3 d, const vec3 s_, const float a)
-        : Kd(d), Ks(s_), alpha(a), texid(0) {
-        Pd = length(Kd) / (length(Kd) + length(Ks)); Pr = length(Ks) / (length(Kd) + length(Ks));
+    Material(const vec3 Kd_, const vec3 Ks_, const float a_)
+        : Kd(Kd_), Ks(Ks_), Kt(vec3(0.f)), alpha(a_), texid(0) {
+        // s = length(Kd) + length(Ks) + length(Kt); 
+        Pd = length(Kd) / (length(Kd) + length(Ks)); 
+        Pr = length(Ks) / (length(Kd) + length(Ks));
+        Pt = 0.f;
         // std::cout << "Kd: " << length(Kd) << ", Ks: " << length(Ks) << ", Pd: " << Pd << std::endl;
     }
     Material(Material& o) { 
-        Kd = o.Kd;  Ks = o.Ks;  alpha = o.alpha;  texid = o.texid; Pd = length(Kd) / (length(Kd) + length(Ks)); Pr = length(Ks) / (length(Kd) + length(Ks)); 
+        Kd = o.Kd;  
+        Ks = o.Ks;  
+        alpha = o.alpha;  
+        texid = o.texid; 
+        Pd = length(Kd) / (length(Kd) + length(Ks)); 
+        Pr = length(Ks) / (length(Kd) + length(Ks)); 
         // std::cout << Pd << std::endl; 
+    }
+
+    // transmissive
+    Material(const vec3 Kd_, const vec3 Ks_, const float a_, const vec3 Kt_, const float IoR_)
+        : Kd(Kd_), Ks(Ks_), Kt(Kt_), alpha(a_), texid(0), IoR(IoR_)
+    {
+        float s = length(Kd) + length(Ks) + length(Kt); 
+        Pd = length(Kd) / s;
+        Pr = length(Ks) / s;
+        Pt = length(Kt) / s;
+        // std::cout << Pd << ", " << Pr << ", " << Pt << std::endl;
     }
 
     //virtual void apply(const unsigned int program);

@@ -16,7 +16,7 @@ struct Ray {
     Ray() = default;
     Ray(const Vector3<Scalar>& origin,
         const Vector3<Scalar>& direction,
-        Scalar tmin = Scalar(0),
+        Scalar tmin = Scalar(10E-4),
         Scalar tmax = std::numeric_limits<Scalar>::max())
         : origin(origin), direction(direction), tmin(tmin), tmax(tmax)
     {}

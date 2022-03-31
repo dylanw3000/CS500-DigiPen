@@ -118,6 +118,12 @@ void Scene::Command(const std::vector<std::string>& strings,
         // third is beer's law transmission followed by index of refraction.
         // Creates a Material instance to be picked up by successive shapes
         currentMat = new Material(vec3(f[1], f[2], f[3]), vec3(f[4], f[5], f[6]), f[7]);
+        if (f.size() >= 11) {
+            currentMat = new Material(vec3(f[1], f[2], f[3]), vec3(f[4], f[5], f[6]), f[7], vec3(f[8], f[9], f[10]), f[11]);
+            if (false && f[8] != 0) {
+                std::cout << "(" << f[8] << ", " << f[9] << ", " << f[10] << ")" << std::endl;
+            }
+        }
     }
 
     else if (c == "light") {
@@ -192,6 +198,7 @@ Intersection Scene::SampleLight() {
     if (vectorOfLights.size() == 0) return Q;
 
     // TODO select light randomly (uniformly) ; currently hardcoded
+    // int index = int(myrandom(RNGen) * vectorOfLights.size());
     Shape* shape = vectorOfLights[0];
     
 
@@ -220,11 +227,39 @@ vec3 SampleLobe(vec3 A, float c, float phi) {
 vec3 Intersection::SampleBrdf(vec3 wo, vec3 N) {
     float m1 = myrandom(RNGen);
     float m2 = myrandom(RNGen);
-    if (myrandom(RNGen) < object->mat->Pd) {
+
+    float randomChoice = myrandom(RNGen);
+
+    // DIFFUSE
+    if (randomChoice < object->mat->Pd) {   // diffuse
         return SampleLobe(N, sqrtf(m1), 2.f * PI * m2);
     }
-    vec3 m = SampleLobe(N, powf(m1, 1.f / (object->mat->alpha + 1)), 2.f * PI * m2);
-    return 2.f * fabs(dot(wo, m)) * m - wo;
+
+    // REFLECTION
+    else if (randomChoice < object->mat->Pd + object->mat->Pr) {    // reflection
+        vec3 m = SampleLobe(N, powf(m1, 1.f / (object->mat->alpha + 1)), 2.f * PI * m2);
+        return 2.f * fabs(dot(wo, m)) * m - wo;
+    }
+
+    // TRANSMISSION
+    float costheta = powf(m1, 1.f / (object->mat->alpha + 1.f));
+    vec3 m = SampleLobe(N, costheta, 2.f * PI * m2);
+
+    float n;
+    if (dot(wo, N) > 0) {
+        n = 1.f / object->mat->IoR;
+    }
+    else {
+        n = object->mat->IoR;
+    }
+
+    float r = 1 - (n * n) * (1.f - powf(dot(wo, m), 2));
+
+    if (r < 0) {
+        return 2 * fabs(dot(wo, m)) * m - wo;
+    }
+    
+    return (n * dot(wo, m) - (dot(wo, N) >= 0.f ? 1.f : -1.f) * sqrtf(r)) * m - n * wo;
 }
 
 
@@ -234,8 +269,8 @@ vec3 Intersection::F(float d) {
 }
 
 float Xp(float d) {
-    if (d > 0) return 1;
-    return 0;
+    if (d > 0) return 1.f;
+    return 0.f;
 }
 
 float Intersection::D(vec3 m) {
@@ -265,7 +300,33 @@ vec3 Intersection::EvalScattering(vec3 wo, vec3 N, vec3 wi) {
     vec3 m = normalize(wo + wi);
     vec3 Ed = object->mat->Kd / PI;
     vec3 Er = D(m) * G(wi, wo, m) * F(dot(wi, m)) / (4 * fabs(dot(wi, N)) * fabs(dot(wo, N)));
-    return fabs(dot(N, wi)) * (Ed + Er);
+
+    float ni, no, n;
+    if (dot(wo, N) > 0) {
+        ni = 1.f;
+        no = object->mat->IoR;
+    }
+    else {
+        ni = object->mat->IoR;
+        no = 1.f;
+    }
+    n = ni / no;
+
+    float At = 1.f;
+    m = -normalize(no * wi + ni * wo);
+    float r = 1 - (n * n) * (1.f - powf(dot(wo, m), 2));
+
+    vec3 Et;
+    if (r < 0) {
+        m = normalize(wo + wi);
+        Et = D(m) * G(wi, wo, m) * F(dot(wi, m)) / (4 * abs(dot(wi, N)) * abs(dot(wo, N)));
+    }
+    else {
+        Et = D(m) * G(wi, wo, m) * (1.f-F(dot(wi, m))) / (4 * abs(dot(wi, N)) * abs(dot(wo, N)));
+        Et *= abs(dot(wi, m)) * abs(dot(wo, m)) * (no * no) / (no * dot(wi, m) + ni * dot(wo, m));
+    }
+
+    return fabs(dot(N, wi)) * (Ed + Er + Et);
 }
 
 
@@ -274,7 +335,31 @@ float Intersection::PdfBrdf(vec3 wo, vec3 N, vec3 wi) {
     vec3 m = normalize(wo + wi);
     float pd = fabs(dot(wi, N)) / PI;
     float pr = D(m) * fabs(dot(m, N)) / (4 * fabs(dot(wi, m)));
-    return pd * object->mat->Pd + pr * object->mat->Pr;
+
+    float ni, no, n;
+    if (dot(wo, N) > 0) {
+        ni = 1.f;
+        no = object->mat->IoR;
+    }
+    else {
+        ni = object->mat->IoR;
+        no = 1.f;
+    }
+    n = ni / no;
+
+    m = -normalize(no*wi + ni*wo);
+    float r = 1 - (n * n) * (1.f - pow(dot(wo, m), 2));
+    float pt = D(m) * abs(dot(m, N));
+    if (r < 0) {
+        m = normalize(wo + wi);
+        pt *= 1 / (4 * abs(dot(wi, m)));
+    }
+    else {
+        pt *= (no * no) * abs(dot(wi, m)) / pow(no * dot(wi, m) + ni * dot(wo, m), 2);
+    }
+
+    // std::cout << pd << " : " << object->mat->Pd << "     " << pr << " : " << object->mat->Pr << "     " << pt << " : " << object->mat->Pt << std::endl;
+    return pd * object->mat->Pd + pr * object->mat->Pr + pt * object->mat->Pt;
     // return length(dot(N, wi)) / PI;
 }
 
@@ -309,20 +394,70 @@ vec3 Scene::TracePath(Ray ray) {
     if (P.object->mat->isLight()) return EvalRadiance(P);
 
     vec3 wo = -ray.dir;
+    vec3 wi = normalize(ray.dir);
     
     // while russian roulette
     float russianRoulette = 0.8f;
+
+    /*
+    if (P.object->mat->Pd == 1.f) return C;
+    
+    while (true) {
+        std::cout << "Pos: " << P.P.x << ", " << P.P.y << ", " << P.P.z << std::endl;
+        std::cout << "Ang: " << wi.x << ", " << wi.y << ", " << wi.z << std::endl;
+
+        if (P.object->mat->Pd == 1.f) {
+            std::cout << "Kd: " << P.object->mat->Kd.x << ", " << P.object->mat->Kd.y << ", " << P.object->mat->Kd.z << std::endl;
+        }
+        else {
+            std::cout << "Transparent" << std::endl;
+        }
+        std::cout << std::endl;
+
+        wi = P.SampleBrdf(wo, N);
+        Ray t(P.P, wi);
+        Intersection Q = bvh->intersect(t);
+        if (!Q.collision) return C;
+
+        if (Q.object->mat->isLight()) {
+            std::cout << "light hit" << std::endl;
+            return C;
+        }
+
+        P = Q;
+        N = P.N;
+        wo = -wi;
+    }
+
+    /*
+    wi = P.SampleBrdf(wo, N);
+    t = Ray(P.P, wi);
+    Q = bvh->intersect(t);
+    if (!Q.collision) return C;
+
+    P = Q;
+    N = P.N;
+    wo = -wi;
+    */
+
+    // return P.SampleBrdf(wo, N);
 
     while (myrandom(RNGen) <= russianRoulette) {
 
         // Explicit Light connection
         Intersection L = SampleLight();
         float p = PdfLight(L) / GeometryFactor(P, L);
-        vec3 wi = normalize(L.P - P.P);
+        
+        wi = normalize(L.P - P.P);
         Intersection I = bvh->intersect(Ray(P.P, normalize(L.P - P.P)));
         if (p > 0.f && I.collision && distance(I.P, L.P) < 10E-3) {
+            float q = P.PdfBrdf(wo, N, wi) * russianRoulette;
+            float wmis = (p * p) / ((p * p) + (q * q));
+            // std::cout << p << ", " << q << " = " << wmis << std::endl;
+            wmis = .5;
+
             vec3 f = P.EvalScattering(wo, N, wi);
-            C += 0.5f * W * f / p * EvalRadiance(L);
+            C += W * wmis * f / p * EvalRadiance(L);
         }
         
 
@@ -335,13 +470,16 @@ vec3 Scene::TracePath(Ray ray) {
         vec3 f = P.EvalScattering(wo, N, wi);
         p = P.PdfBrdf(wo, N, wi) * russianRoulette;
         if (p < 10E-6) break;
-
+        
         W *= f / p;
 
 
         // Implicit Light Connection
         if (Q.object->mat->isLight()) {
-            C += 0.5f * W * EvalRadiance(Q);
+            float q = PdfLight(Q) / GeometryFactor(P, Q);
+            float wmis = (p * p) / ((p * p) + (q * q));
+            wmis = .5;
+            C += W * wmis * EvalRadiance(Q);
             break;
         }
 
@@ -366,11 +504,18 @@ void Scene::TraceImage(Color* image, const int pass)
     Y = camera->ry * transformVector(camera->orient, Yaxis());
     Z = transformVector(camera->orient, Zaxis());
 
+    /*
+    Ray r(camera->eye, vec3(-0.838028, -0.47094, -0.275543));
+    TracePath(r);
+    return;
+    */
+
     // for(int p=0; p<pass; p++){
 #pragma omp parallel for schedule(dynamic, 1) // Magic: Multi-thread y loop
         for (int y = 0; y < height; y++) {
 
             fprintf(stderr, "Rendering %4d %4d\r", y, pass);
+            // fprintf(stderr, "Rendering %4d %4d\r", y, pass);
             for (int x = 0; x < width; x++) {
                 Color color = Color(0, 0, 0);
 
