@@ -130,6 +130,7 @@ xcopy .\libs\assimp\32\assimp.dll .\Release /Y /D</Command>
     <ClCompile Include="readAssimpFile.cpp" />
     <ClCompile Include="rgbe.cpp" />
     <ClCompile Include="Shape.cpp" />
+    <ClCompile Include="Texture.cpp" />
     <ClInclude Include="acceleration.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Intersection.h" />
@@ -138,6 +139,7 @@ xcopy .\libs\assimp\32\assimp.dll .\Release /Y /D</Command>
     <ClInclude Include="raytrace.h" />
     <ClInclude Include="geom.h" />
     <ClInclude Include="Shape.h" />
+    <ClInclude Include="Texture.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

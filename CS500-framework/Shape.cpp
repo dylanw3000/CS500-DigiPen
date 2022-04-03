@@ -14,7 +14,17 @@ Intersection Sphere::Intersect(Ray ray) {
 	if (discriminant >= 0) {
 		discriminant = sqrtf(discriminant / 4.f);
 		float left = -b / 2.f;
-		float t = min(left - discriminant, left + discriminant);
+		float t = -1.f;
+
+		float lm = left - discriminant;
+		float lp = left + discriminant;
+		if (lm > 0 && lp > 0) {
+			t = min(left - discriminant, left + discriminant);
+		}
+		else {
+			if (lm > 0) t = lm;
+			if (lp > 0) t = lp;
+		}
 		out.addIntersect(this, t, ray.eval(t), normalize(ray.eval(t)-pos));
 	}
 

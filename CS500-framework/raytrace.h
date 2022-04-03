@@ -9,6 +9,8 @@
 #include "Ray.h"
 #include "acceleration.h"
 
+#include "Texture.h"
+
 const float PI = 3.14159f;
 const float Radians = PI / 180.0f;    // Convert degrees to radians
 
@@ -26,6 +28,9 @@ public:
     float IoR = 1.f;
 
     virtual bool isLight() { return false; }
+
+    bool isTexture = false;
+    Texture* tex;
 
     Material() : Kd(vec3(1.0, 0.5, 0.0)), Ks(vec3(1, 1, 1)), alpha(1.0), texid(0) { Pd = length(Kd) / (length(Kd) + length(Ks)); Pr = length(Ks) / (length(Kd) + length(Ks)); }
     Material(const vec3 Kd_, const vec3 Ks_, const float a_)
@@ -98,6 +103,14 @@ public:
     Light(const vec3 e) : Material() { Kd = e; }
     virtual bool isLight() { return true; }
     //virtual void apply(const unsigned int program);
+};
+
+class LightTexture : public Light {
+public:
+    LightTexture(const std::string& path) : Light(vec3(1.f)) {
+        isTexture = true;
+        tex = new Texture(path);
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////

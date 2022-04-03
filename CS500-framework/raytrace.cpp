@@ -131,6 +131,10 @@ void Scene::Command(const std::vector<std::string>& strings,
         currentMat = new Light(vec3(f[1], f[2], f[3]));
     }
 
+    else if (c == "lighttex") {
+        currentMat = new LightTexture("sample.png");
+    }
+
     else if (c == "sphere") {
         // syntax: sphere x y z   radius
         // Creates a Shape instance for a sphere defined by a center and radius
@@ -370,7 +374,18 @@ float Scene::PdfLight(Intersection L) {
 }
 
 vec3 EvalRadiance(Intersection Q) {
-    if(Q.object->mat->isLight()) return Q.object->mat->Kd;
+    if (Q.object->mat->isLight()) {
+        if (Q.object->mat->isTexture) {
+            // return 
+            // Q.distance
+            float theta = atan2(Q.N.y, Q.N.x);
+            float phi = acos(Q.N.z);
+            vec2 uv(theta / (PI * 2), phi / PI);
+            Q.object->mat->tex->image;
+            Q.object->mat->tex->textureId;
+        }
+        return Q.object->mat->Kd;
+    }
     return vec3(0.f);
 }
 
@@ -387,6 +402,7 @@ vec3 Scene::TracePath(Ray ray) {
 
     Intersection P = bvh->intersect(ray);
     vec3 N = P.N;
+    
     
     if (!P.collision) return C;
     if (P.object->mat->isLight()) return EvalRadiance(P);
