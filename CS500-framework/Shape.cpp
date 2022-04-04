@@ -15,6 +15,10 @@ Intersection Sphere::Intersect(Ray ray) {
 		discriminant = sqrtf(discriminant / 4.f);
 		float left = -b / 2.f;
 		float t = min(left - discriminant, left + discriminant);
+		if (t < 0 && 0) {
+			if (left - discriminant > 0) t = left - discriminant;
+			if (left + discriminant > 0) t = left + discriminant;
+		}
 		out.addIntersect(this, t, ray.eval(t), normalize(ray.eval(t)-pos));
 	}
 

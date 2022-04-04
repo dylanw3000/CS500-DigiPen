@@ -310,7 +310,11 @@ vec3 Intersection::EvalScattering(vec3 wo, vec3 N, vec3 wi) {
     }
     n = ni / no;
 
-    float At = 1.f;
+    vec3 At(1.f);
+    if (dot(wo, N) < 0 && 1) {
+        At = exp(t * log(object->mat->Kt));
+    }
+
     m = -normalize(no * wi + ni * wo);
     float r = 1 - (n * n) * (1.f - powf(dot(wo, m), 2));
 
@@ -323,7 +327,7 @@ vec3 Intersection::EvalScattering(vec3 wo, vec3 N, vec3 wi) {
         Et = D(m) * G(wi, wo, m) * (1.f-F(dot(wi, m))) / (abs(dot(wi, N)) * abs(dot(wo, N)));
         Et *= abs(dot(wi, m)) * abs(dot(wo, m)) * (no * no) / powf(no * dot(wi, m) + ni * dot(wo, m), 2);
     }
-    // Et *= 0.f;
+    Et *= At;
 
     return fabs(dot(N, wi)) * (Ed + Er + Et);
 }
