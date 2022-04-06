@@ -130,7 +130,7 @@ int main(int argc, char** argv)
             )
         ) {
             // Write the image
-            WriteHdrImage(to_string(pass) + hdrName, scene->width, scene->height, image, pass);
+            WriteHdrImage(std::to_string(pass) + hdrName, scene->width, scene->height, image, pass);
             fprintf(stderr, "\n");
         }
     }

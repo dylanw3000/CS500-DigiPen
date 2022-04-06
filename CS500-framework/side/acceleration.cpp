@@ -57,8 +57,8 @@ SimpleBox BvhShape::bounding_box() const
     if (dynamic_cast<Sphere*>(shape) != nullptr) {
         Sphere* s = static_cast<Sphere*>(shape);
         
-        out = SimpleBox(s->center - vec3(1.f)*s->radius);
-        out.extend(s->center + vec3(1.f)*s->radius);
+        out = SimpleBox(s->pos - vec3(1.f)*s->radius);
+        out.extend(s->pos + vec3(1.f)*s->radius);
         
     }
     else if (dynamic_cast<Box*>(shape) != nullptr) {

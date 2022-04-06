@@ -9,12 +9,13 @@ class Intersection {
 public:
 	Intersection() : t(INFINITY), object(nullptr) {}
 
-	void addIntersect(Shape* _o, float _t, glm::vec3 _P, glm::vec3 _N) {
+	void addIntersect(Shape* _o, float _t, glm::vec3 _P, glm::vec3 _N, glm::vec2 _uv = glm::vec2(0,0)) {
 		collision = true;
 		t = _t;
 		object = _o;
 		P = _P;
 		N = _N;
+		uv = _uv;
 	}
 
 	float distance() const { return t; }
@@ -34,4 +35,6 @@ public:
 	float D(vec3 m);
 	float Intersection::G(vec3 wi, vec3 wo, vec3 m);
 	float Intersection::G1(vec3 v, vec3 m);
+
+	glm::vec2 uv;
 };

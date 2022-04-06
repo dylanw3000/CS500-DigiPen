@@ -202,7 +202,7 @@ Intersection Scene::SampleLight() {
 
     if(dynamic_cast<Sphere*>(shape) != nullptr) {
         Sphere* s = static_cast<Sphere*>(shape);
-        Q = s->SampleSphere(s->center, s->radius);
+        Q = s->SampleSphere(s->pos, s->radius);
     }
 
     return Q;
@@ -213,72 +213,52 @@ vec3 SampleLobe(vec3 A, float c, float phi) {
 
     vec3 K(s * cosf(phi), s * sinf(phi), c);
     if (fabs(A.z - 1.f) < 10E-3) return K;
-    if (fabs(A.z + 1.f) < 10E-3) return vec3(K.x, -K.y, -K.z);
+    if (fabs(A.z + 1.f) < 10E-3) return K;
 
     A = normalize(A);
     vec3 B = normalize(vec3(-A.y, A.x, 0.f));
     vec3 C = cross(A, B);
 
-    return normalize(K.x*B + K.y*C + K.z*A);
+    return K.x*B + K.y*C + K.z*A;
 }
 
 vec3 Intersection::SampleBrdf(vec3 wo, vec3 N) {
-    vec3 Kd = object->mat->Kd;
-    vec3 Ks = object->mat->Ks;
-    vec3 Kt = object->mat->Kt;
-    float pd = object->mat->Pd;
-    float pr = object->mat->Pr;
-    float pt = object->mat->Pt;
+    float m1 = myrandom(RNGen);
+    float m2 = myrandom(RNGen);
 
-    float E1 = myrandom(RNGen);
-    float E2 = myrandom(RNGen);
+    float randomChoice = myrandom(RNGen);
 
-    float E = myrandom(RNGen);
-    vec3 wi; // output
-    if (E < pd)
-    { // diffuse 
-        wi = SampleLobe(N, sqrtf(E1), 2 * PI * E2);
-
-    }
-    else
-    { // reflection
-        float cosThetam = cos(atan((object->mat->alpha * sqrtf(E1)) / sqrtf(1 - E1)));
-        vec3 m = SampleLobe(N, cosThetam, 2 * PI * E2);
-        float w0dotm = dot(wo, m) > 1.f ? 1.f : dot(wo, m);
-        wi = normalize(2 * abs(w0dotm) * m - wo);
-
-        if (E >= pd + pr)
-        { // transmission
-
-
-            float w0dotm = dot(wo, m) > 1.f ? 1.f : dot(wo, m);
-            float w0dotN = dot(wo, N) > 1.f ? 1.f : dot(wo, N);
-
-            // Calculate n
-            float n = 0.f;
-            if (w0dotN > 0)
-            { // Path leaves an object, passing from inside to outside
-                float ni = 1.f;
-                float n0 = object->mat->IoR;
-                n = ni / n0;
-            }
-            else
-            { // Path enters an object, passing from outside to inside
-                float ni = object->mat->IoR;
-                float n0 = 1.f;
-                n = ni / n0;
-
-            }
-            // Test radicand:
-            float r = 1 - pow(n, 2) * (1 - pow(w0dotm, 2));
-            if (r >= 0)
-                wi = (n * w0dotm - sign(w0dotN) * sqrtf(r)) * m - n * wo;
-
-        }
-
+    // DIFFUSE
+    if (randomChoice < object->mat->Pd) {   // diffuse
+        return SampleLobe(N, sqrtf(m1), 2.f * PI * m2);
     }
 
-    return wi;
+    // REFLECTION
+    else if (randomChoice < object->mat->Pd + object->mat->Pr) {    // reflection
+        float costheta = powf(m1, 1.f / (object->mat->alpha + 1.f));
+        vec3 m = SampleLobe(N, costheta, 2.f * PI * m2);
+        return 2.f * fabs(dot(wo, m)) * m - wo;
+    }
+
+    // TRANSMISSION
+    float costheta = powf(m1, 1.f / (object->mat->alpha + 1.f));
+    vec3 m = SampleLobe(N, costheta, 2.f * PI * m2);
+
+    float n;
+    if (dot(wo, N) > 0) {
+        n = 1.f / object->mat->IoR;
+    }
+    else {
+        n = object->mat->IoR;
+    }
+
+    float r = 1 - (n * n) * (1.f - powf(dot(wo, m), 2.f));
+
+    if (r < 0) {
+        return 2 * fabs(dot(wo, m)) * m - wo;
+    }
+    
+    return (n * dot(wo, m) - (dot(wo, N) >= 0.f ? 1.f : -1.f) * sqrtf(r)) * m - n * wo;
 }
 
 
@@ -293,33 +273,22 @@ float Xp(float d) {
 }
 
 float Intersection::D(vec3 m) {
-    float mdotN = dot(m, N);
-    float Ndotm = dot(N, m);
-    if (mdotN > 1.f)
-        mdotN = 1.f;
-    if (Ndotm > 1.f)
-        Ndotm = 1.f;
-    float tanThetaM = sqrtf(1.0f - pow(mdotN, 2)) / mdotN;
-    float denominator = PI * pow(Ndotm, 4) * pow(pow(object->mat->alpha, 2) + pow(tanThetaM, 2), 2);
-    float out = Xp(mdotN) * (pow(object->mat->alpha, 2) / denominator);
-    if (out > 1.f)
-        out = 1.f;
-    return out;
+    return Xp(dot(m, N)) * (object->mat->alpha + 2) / (2 * PI) * powf(dot(m, N), object->mat->alpha);
 }
 
 float Intersection::G1(vec3 v, vec3 m) {
-    float vdotN = dot(v, N);
-    if (vdotN > 1.f)
-        return 1.0f;
-    float vdotm = dot(v, m);
-    if (vdotm > 1.f)
-        vdotm = 1.f;
+    float d = dot(v, N);
+    if (d > 1.f) return 1;
 
-    float tanThetaV = sqrtf(1.0f - pow(vdotN, 2)) / vdotN;
-    if (abs(tanThetaV) < 0.0001f)
-        return 1.0f;
-    float denominator = 1 + sqrtf(1 + pow(object->mat->alpha, 2) * pow(tanThetaV, 2));
-    return Xp(vdotm / vdotN) * (2 / denominator);
+    float theta = sqrtf(1 - pow(d, 2)) / d;
+    if (fabs(theta) == 0) return 1;
+
+    float x = Xp(dot(v, m) / dot(v, N));
+    float a = sqrtf(object->mat->alpha / 2 + 1) / theta;
+    if (a < 1.6) {
+        return x * (3.535*a + 2.181*a*a) / (1 + 2.276*a + 2.577*a*a);
+    }
+    return 1.f;
 }
 
 float Intersection::G(vec3 wi, vec3 wo, vec3 m) {
@@ -327,150 +296,76 @@ float Intersection::G(vec3 wi, vec3 wo, vec3 m) {
 }
 
 vec3 Intersection::EvalScattering(vec3 wo, vec3 N, vec3 wi) {
-    float pd = object->mat->Pd;
-    float pr = object->mat->Pr;
-    float pt = object->mat->Pt;
-
-
-    vec3 Ed = vec3(0.f);
-    vec3 Er = vec3(0.f);
-    vec3 Et = vec3(0.f);
     vec3 m = normalize(wo + wi);
-    float widotm = dot(wi, m) > 1.f ? 1.f : dot(wi, m);
-    float widotN = dot(wi, N) > 1.f ? 1.f : dot(wi, N);
-    float w0dotN = dot(wo, N) > 1.f ? 1.f : dot(wo, N);
-    float Ndotwi = dot(N, wi) > 1.f ? 1.f : dot(N, wi);
+    vec3 Ed = object->mat->Kd / PI;
+    vec3 Er = D(m) * G(wi, wo, m) * F(dot(wi, m)) / (4 * fabs(dot(wi, N)) * fabs(dot(wo, N)));
 
+    float ni, no, n;
+    if (dot(wo, N) > 0) {
+        ni = 1.f;
+        no = object->mat->IoR;
+    }
+    else {
+        ni = object->mat->IoR;
+        no = 1.f;
+    }
+    n = ni / no;
 
-    // Calculate Ed
-    if (pd > 10E-4)
-        Ed = object->mat->Kd / PI;
-
-
-    // Calculate Er
-    float denominator = 4 * abs(widotN) * abs(w0dotN);
-    if (pr > 10E-4)
-        Er = (D(m) * G(wi, wo, m) * F(widotm)) / denominator;
-
-    float Di, Gi;
-    vec3 Fi;
-
-
-    vec3 numerator_0;
-    float denominator_0;
-    float numerator_1;
-    float denominator_1;
-    float n = 0.f, n0 = 0.f, ni = 0.f, Pt = 0.f;
-    float w0dotm;
-
-    // Calculate Et
-    if (pt > 10E-4)
-    {
-        if (w0dotN > 0)
-        { // Path leaves an object, passing form inside to outside
-            ni = 1.f;
-            n0 = object->mat->IoR;
-            m = -(n0 * wi + ni * wo);
-            n = ni / n0;
-        }
-        else
-        { // Path enters an object, passing from outside to inside
-            ni = object->mat->IoR;
-            n0 = 1.f;
-            m = -(n0 * wi + ni * wo);
-            n = ni / n0;
-
-        }
-
-        m = normalize(m);
-        widotm = dot(wi, m) > 1.f ? 1.f : dot(wi, m);
-        w0dotm = dot(wo, m) > 1.f ? 1.f : dot(wo, m);
-
-
-        // Calculate A(t) for Beer's Law
-        vec3 At = vec3(1.f);
-        if (w0dotN < 0)
-            At = glm::exp(t * glm::log(object->mat->Kt));
-
-
-
-        // Test radicand:
-        float r = 1 - pow(n, 2) * (1 - pow(w0dotm, 2));
-        if (r >= 0)
-        {
-            Di = D(m);
-            Gi = G(wi, wo, m);
-            Fi = F(widotm);
-            numerator_0 = (D(m) * G(wi, wo, m) * (vec3(1.f) - F(widotm)));
-            denominator_0 = abs(widotN) * abs(w0dotN);
-
-            numerator_1 = abs(widotm) * abs(w0dotm) * pow(n0, 2);
-            denominator_1 = pow(n0 * widotm + ni * w0dotm, 2);
-
-            Et = At * (numerator_0 / denominator_0) * (numerator_1 / denominator_1);
-        }
-        else
-            Et = At * Er;
+    vec3 At(1.f);
+    if (dot(wo, N) < 0) {
+        At = exp(t * log(object->mat->Kt));
     }
 
-    vec3 out = abs(Ndotwi) * (Ed + Er + Et);
-    return out;
+    m = -normalize(no * wi + ni * wo);
+    float r = 1 - (n * n) * (1.f - powf(dot(wo, m), 2));
+
+    vec3 Et;
+    if (r < 0) {
+        m = normalize(wo + wi);
+        Et = D(m) * G(wi, wo, m) * F(dot(wi, m)) / (4 * abs(dot(wi, N)) * abs(dot(wo, N)));
+    }
+    else {
+        Et = D(m) * G(wi, wo, m) * (1.f-F(dot(wi, m))) / (abs(dot(wi, N)) * abs(dot(wo, N)));
+        Et *= abs(dot(wi, m)) * abs(dot(wo, m)) * (no * no) / powf(no * dot(wi, m) + ni * dot(wo, m), 2.f);
+    }
+    Et *= At;
+
+    return fabs(dot(N, wi)) * (Ed + Er + Et);
 }
 
 
 
 float Intersection::PdfBrdf(vec3 wo, vec3 N, vec3 wi) {
-    vec3 m = (wo + wi) / glm::length(wo + wi);
-    float pd = object->mat->Pd;
-    float pr = object->mat->Pr;
-    float pt = object->mat->Pt;
-    float Pd = 0.f, Pr = 0.f, Pt = 0.f;
+    vec3 m = normalize(wo + wi);
+    float pd = fabs(dot(wi, N)) / PI;
+    float pr = D(m) * fabs(dot(m, N)) / (4 * fabs(dot(wi, m)));
 
-    float ior = object->mat->IoR;
+    float ni, no, n;
+    if (dot(wo, N) > 0) {
+        ni = 1.f;
+        no = object->mat->IoR;
+    }
+    else {
+        ni = object->mat->IoR;
+        no = 1.f;
+    }
+    n = ni / no;
 
-    if (pd > 0.0001f)
-        Pd = abs(dot(wi, N)) / PI;
-
-    if (pr > 0.0001f)
-        Pr = D(m) * abs(dot(m, N)) * (1 / (4 * abs(dot(wi, m))));
-
-
-    if (pt > 0.0001f)
-    {
-        // update m for Pt calculation
-        float ni, n0, n;
-        if (dot(wo, N) > 0)
-        { // Path leaves an object, passing form inside to outside
-            ni = 1.f;
-            n0 = ior;
-            m = -(n0 * wi + ni * wo);
-            n = ni / n0;
-        }
-        else
-        { // Path enters an object, passing from outside to inside
-            ni = ior;
-            n0 = 1.f;
-            m = -(n0 * wi + ni * wo);
-            n = ni / n0;
-
-        }
-        m = normalize(m);
-
-
-        // Test radicand:
-        float r = 1.f - pow(n, 2) * (1.f - pow(dot(wo, m), 2));
-        if (r >= 0)
-        {
-            Pt = D(m) * abs(dot(m, N)) * ((pow(n0, 2) * abs(dot(wi, m))) / pow(n0 * dot(wi, m) + ni * dot(wo, m), 2));
-        }
-        else
-        {
-            Pt = Pr;
-        }
+    m = -normalize(no*wi + ni*wo);
+    float r = 1 - (n * n) * (1.f - pow(dot(wo, m), 2.f));
+    float pt = 0.f;
+    if (r < 0) {
+        m = normalize(wo + wi);
+        pt = D(m) * abs(dot(m, N));
+        pt *= 1 / (4 * abs(dot(wi, m)));
+    }
+    else {
+        pt = D(m) * abs(dot(m, N));
+        pt *= (no * no) * abs(dot(wi, m)) / pow(no * dot(wi, m) + ni * dot(wo, m), 2);
     }
 
-
-    return pd * Pd + pr * Pr + pt * Pt;
+    // std::cout << pd << " : " << object->mat->Pd << "     " << pr << " : " << object->mat->Pr << "     " << pt << " : " << object->mat->Pt << std::endl;
+    return pd * object->mat->Pd + pr * object->mat->Pr + pt * object->mat->Pt;
 }
 
 float Scene::PdfLight(Intersection L) {
@@ -508,6 +403,88 @@ vec3 Scene::TracePath(Ray ray) {
     
     // while russian roulette
     float russianRoulette = 0.8f;
+
+#if TRANSDEBUG
+    if (P.object->mat->Pd == 1.f) return C;
+    
+    while (true) {
+        std::cout << "Pos: " << P.P.x << ", " << P.P.y << ", " << P.P.z << std::endl;
+        std::cout << "Ang: " << wi.x << ", " << wi.y << ", " << wi.z << std::endl;
+
+        if (P.object->mat->Pd == 1.f) {
+            std::cout << "Kd: " << P.object->mat->Kd.x << ", " << P.object->mat->Kd.y << ", " << P.object->mat->Kd.z << std::endl;
+        }
+        else {
+            std::cout << "Transparent" << std::endl;
+        }
+        std::cout << std::endl;
+
+
+
+
+        Intersection L = SampleLight();
+        float p = PdfLight(L) / GeometryFactor(P, L);
+
+        wi = normalize(L.P - P.P);
+        Intersection I = bvh->intersect(Ray(P.P, wi));
+        if (p > 0.f && I.collision && distance(I.P, L.P) < 10E-3) {
+            float q = P.PdfBrdf(wo, N, wi) * russianRoulette;
+            float wmis = (p * p) / ((p * p) + (q * q));
+            // std::cout << p << ", " << q << " = " << wmis << std::endl;
+            // wmis = .5;
+
+            vec3 f = P.EvalScattering(wo, N, wi);
+            C += W * wmis * f / p * EvalRadiance(L);
+        }
+
+
+
+        wi = P.SampleBrdf(wo, N);
+        Ray t(P.P, wi);
+        Intersection Q = bvh->intersect(t);
+        if (!Q.collision) { 
+            std::cout << "hit nothing" << std::endl;
+            return C; 
+        }
+
+        vec3 f = P.EvalScattering(wo, N, wi);
+        p = P.PdfBrdf(wo, N, wi) * russianRoulette;
+        if (p < 10E-6) break;
+
+        W *= f / p;
+
+        std::cout << "f: " << f.x << ", " << f.y << ", " << f.z << std::endl;
+        std::cout << "p: " << p << std::endl << std::endl;
+
+        if (Q.object->mat->isLight()) {
+            std::cout << "light hit" << std::endl;
+            std::cout << "C: " << C.x << ", " << C.y << ", " << C.z << std::endl << std::endl;
+            C += W * 0.5f * EvalRadiance(Q);
+            return C;
+        }
+
+        std::cout << "W: " << W.x << ", " << W.y << ", " << W.z << std::endl;
+        std::cout << "C: " << C.x << ", " << C.y << ", " << C.z << std::endl << std::endl;
+
+        P = Q;
+        N = P.N;
+        wo = -wi;
+    }
+    return C;
+#endif
+
+    /*
+    wi = P.SampleBrdf(wo, N);
+    t = Ray(P.P, wi);
+    Q = bvh->intersect(t);
+    if (!Q.collision) return C;
+
+    P = Q;
+    N = P.N;
+    wo = -wi;
+    */
+
+    // return P.SampleBrdf(wo, N);
 
     while (myrandom(RNGen) <= russianRoulette) {
 
