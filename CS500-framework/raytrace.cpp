@@ -28,6 +28,29 @@ Scene::Scene()
     camera = new Camera();
 }
 
+class _Image {
+public:
+    int height, width, channels;
+    uint8_t* img;
+
+    _Image(const char* filename) {
+        img = stbi_load(filename, &width, &height, &channels, 3);
+        if (img == NULL) {
+            std::cout << "Image failed to load" << std::endl;
+            exit(1);
+        }
+    }
+};
+
+vec3 getUV(_Image image, float u, float v) {
+    // Intentionally incomplete, not rounding up or linearly interpolating color
+    int x = image.width * u;
+    int y = image.height * v;
+
+    int index = image.channels * (x + y * image.width);
+    return vec3(image.img[index], image.img[index + 1], image.img[index + 2]);
+}
+
 void Scene::Finit()
 {
     std::cout << "vectorOfShapes size: " << vectorOfShapes.size() << std::endl;
@@ -40,7 +63,18 @@ void Scene::Finit()
     std::cout << "vectorOfLights size: " << vectorOfLights.size() << std::endl;
 
     bvh = new AccelerationBvh(vectorOfShapes);
+
+    _Image image("sample.png");
+
+    vec3 a = getUV(image, .5, .5);
+    std::cout << a.x << ", " << a.y << ", " << a.z << std::endl;
+    /*
+    for (unsigned char* p = image.img; p != image.img + 3*20; p += channels) {
+        std::cout << p << ", " << p+1 << ", " << p+2 << std::endl;
+    }
+    */
 }
+
 
 void Scene::triangleMesh(MeshData* mesh)
 {

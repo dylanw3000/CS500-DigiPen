@@ -107,6 +107,8 @@ int main(int argc, char** argv)
     // Read the scene, calling scene.Command for each line.
     ReadScene(inName, scene);
 
+    
+
     scene->Finit();
 
     // Allocate and clear an image array
