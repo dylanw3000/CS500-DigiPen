@@ -1,33 +1,37 @@
 #include "Shape.h"
 
 #define BOUNDINGBOX true
+#define PI 3.14159f
 
 Intersection Sphere::Intersect(Ray ray) {
 	Intersection out;
 
-	vec3 Q = ray.origin - pos;
-	float a = dot(ray.dir, ray.dir);
-	float b = 2.f * dot(Q, ray.dir);
-	float c = dot(Q, Q) - (radius * radius);
+	vec3 Q = ray.origin - center;
 
-	float discriminant = b * b - 4 * a * c;
-	if (discriminant >= 0) {
-		discriminant = sqrtf(discriminant / 4.f);
-		float left = -b / 2.f;
-		float t = -1.f;
+	float t0 = -dot(Q, ray.dir) + pow(pow(dot(Q, ray.dir), 2.f) - dot(Q, Q) + pow(radius, 2.f), 0.5f);
+	float t1 = -dot(Q, ray.dir) - pow(pow(dot(Q, ray.dir), 2.f) - dot(Q, Q) + pow(radius, 2.f), 0.5f);
 
-		float lm = left - discriminant;
-		float lp = left + discriminant;
-		if (lm > 0 && lp > 0) {
-			t = min(left - discriminant, left + discriminant);
-		}
-		else {
-			if (lm > 0) t = lm;
-			if (lp > 0) t = lp;
-		}
-		out.addIntersect(this, t, ray.eval(t), normalize(ray.eval(t)-pos));
+	float t = -1.f;
+	if (t0 >= 10E-3 && t1 >= 10E-3) {
+		t = min(t0, t1);
+	}
+	else if (t0 >= 10E-3) {
+		t = t0;
+	}
+	else if (t1 > 10E-3) {
+		t = t1;
+	}
+	else {
+		return out;
 	}
 
+	vec3 pos = ray.eval(t);
+	vec3 normal = glm::normalize(pos - center);
+	float theta = atan2(normal.y, normal.x);
+	float psi = acos(normal.z);
+	vec2 uv = vec2(theta / (2 * PI), psi / PI);
+
+	out.addIntersect(this, t, pos, normal, uv);
 	return out;
 }
 

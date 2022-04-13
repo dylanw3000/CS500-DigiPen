@@ -28,28 +28,7 @@ Scene::Scene()
     camera = new Camera();
 }
 
-class _Image {
-public:
-    int height, width, channels;
-    uint8_t* img;
 
-    _Image(const char* filename) {
-        img = stbi_load(filename, &width, &height, &channels, 3);
-        if (img == NULL) {
-            std::cout << "Image failed to load" << std::endl;
-            exit(1);
-        }
-    }
-};
-
-vec3 getUV(_Image image, float u, float v) {
-    // Intentionally incomplete, not rounding up or linearly interpolating color
-    int x = image.width * u;
-    int y = image.height * v;
-
-    int index = image.channels * (x + y * image.width);
-    return vec3(image.img[index], image.img[index + 1], image.img[index + 2]);
-}
 
 void Scene::Finit()
 {
@@ -64,14 +43,11 @@ void Scene::Finit()
 
     bvh = new AccelerationBvh(vectorOfShapes);
 
-    _Image image("sample.png");
-
-    vec3 a = getUV(image, .5, .5);
-    std::cout << a.x << ", " << a.y << ", " << a.z << std::endl;
     /*
-    for (unsigned char* p = image.img; p != image.img + 3*20; p += channels) {
-        std::cout << p << ", " << p+1 << ", " << p+2 << std::endl;
-    }
+    texImg = new _Image("sample.png");
+
+    vec3 a = texImg->getUV(.5, .5);
+    std::cout << a.x << ", " << a.y << ", " << a.z << std::endl;
     */
 }
 
@@ -166,7 +142,8 @@ void Scene::Command(const std::vector<std::string>& strings,
     }
 
     else if (c == "lighttex") {
-        currentMat = new LightTexture("sample.png");
+        currentMat = new LightTexture(strings[1]);
+        texImg = currentMat->tex;
     }
 
     else if (c == "sphere") {
@@ -240,7 +217,7 @@ Intersection Scene::SampleLight() {
 
     if(dynamic_cast<Sphere*>(shape) != nullptr) {
         Sphere* s = static_cast<Sphere*>(shape);
-        Q = s->SampleSphere(s->pos, s->radius);
+        Q = s->SampleSphere(s->center, s->radius);
     }
 
     return Q;
@@ -410,13 +387,18 @@ float Scene::PdfLight(Intersection L) {
 vec3 EvalRadiance(Intersection Q) {
     if (Q.object->mat->isLight()) {
         if (Q.object->mat->isTexture) {
+            /*
             // return 
             // Q.distance
             float theta = atan2(Q.N.y, Q.N.x);
             float phi = acos(Q.N.z);
             vec2 uv(theta / (PI * 2), phi / PI);
-            Q.object->mat->tex->image;
+            Q.object->mat->tex->texImg;
             Q.object->mat->tex->textureId;
+            */
+
+            vec2 uv = Q.uv;
+            return Q.object->mat->tex->getUV(uv);
         }
         return Q.object->mat->Kd;
     }
@@ -447,90 +429,9 @@ vec3 Scene::TracePath(Ray ray) {
     // while russian roulette
     float russianRoulette = 0.8f;
 
-#if TRANSDEBUG
-    if (P.object->mat->Pd == 1.f) return C;
-    
-    while (true) {
-        std::cout << "Pos: " << P.P.x << ", " << P.P.y << ", " << P.P.z << std::endl;
-        std::cout << "Ang: " << wi.x << ", " << wi.y << ", " << wi.z << std::endl;
-
-        if (P.object->mat->Pd == 1.f) {
-            std::cout << "Kd: " << P.object->mat->Kd.x << ", " << P.object->mat->Kd.y << ", " << P.object->mat->Kd.z << std::endl;
-        }
-        else {
-            std::cout << "Transparent" << std::endl;
-        }
-        std::cout << std::endl;
-
-
-
-
-        Intersection L = SampleLight();
-        float p = PdfLight(L) / GeometryFactor(P, L);
-
-        wi = normalize(L.P - P.P);
-        Intersection I = bvh->intersect(Ray(P.P, wi));
-        if (p > 0.f && I.collision && distance(I.P, L.P) < 10E-3) {
-            float q = P.PdfBrdf(wo, N, wi) * russianRoulette;
-            float wmis = (p * p) / ((p * p) + (q * q));
-            // std::cout << p << ", " << q << " = " << wmis << std::endl;
-            // wmis = .5;
-
-            vec3 f = P.EvalScattering(wo, N, wi);
-            C += W * wmis * f / p * EvalRadiance(L);
-        }
-
-
-
-        wi = P.SampleBrdf(wo, N);
-        Ray t(P.P, wi);
-        Intersection Q = bvh->intersect(t);
-        if (!Q.collision) { 
-            std::cout << "hit nothing" << std::endl;
-            return C; 
-        }
-
-        vec3 f = P.EvalScattering(wo, N, wi);
-        p = P.PdfBrdf(wo, N, wi) * russianRoulette;
-        if (p < 10E-6) break;
-
-        W *= f / p;
-
-        std::cout << "f: " << f.x << ", " << f.y << ", " << f.z << std::endl;
-        std::cout << "p: " << p << std::endl << std::endl;
-
-        if (Q.object->mat->isLight()) {
-            std::cout << "light hit" << std::endl;
-            std::cout << "C: " << C.x << ", " << C.y << ", " << C.z << std::endl << std::endl;
-            C += W * 0.5f * EvalRadiance(Q);
-            return C;
-        }
-
-        std::cout << "W: " << W.x << ", " << W.y << ", " << W.z << std::endl;
-        std::cout << "C: " << C.x << ", " << C.y << ", " << C.z << std::endl << std::endl;
-
-        P = Q;
-        N = P.N;
-        wo = -wi;
-    }
-    return C;
-#endif
-
-    /*
-    wi = P.SampleBrdf(wo, N);
-    t = Ray(P.P, wi);
-    Q = bvh->intersect(t);
-    if (!Q.collision) return C;
-
-    P = Q;
-    N = P.N;
-    wo = -wi;
-    */
-
-    // return P.SampleBrdf(wo, N);
-
     while (myrandom(RNGen) <= russianRoulette) {
 
+#if false
         // Explicit Light connection
         Intersection L = SampleLight();
         float p = PdfLight(L) / GeometryFactor(P, L);
@@ -546,7 +447,9 @@ vec3 Scene::TracePath(Ray ray) {
             vec3 f = P.EvalScattering(wo, N, wi);
             C += W * wmis * f / p * EvalRadiance(L);
         }
-        
+#else
+        float p = 0.f;
+#endif
 
         // Extend Path
         wi = P.SampleBrdf(wo, N);
@@ -618,6 +521,8 @@ void Scene::TraceImage(Color* image, const int pass)
                 Ray ray(camera->eye, glm::normalize(dx * X + dy * Y - Z));
 
                 Color C = TracePath(ray);
+                vec2 uv(float(x) / width, float(y) / height);
+                // Color C = texImg->getUV(uv);
                 if (all(isnan(C)) || all(isinf(C))) continue;
                 image[y * width + x] += C;
             }

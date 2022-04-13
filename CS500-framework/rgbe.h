@@ -4,7 +4,7 @@
  * WHILE THE AUTHORS HAVE TRIED TO ENSURE THE PROGRAM WORKS CORRECTLY,
  * IT IS STRICTLY USE AT YOUR OWN RISK.  */
 
-/* utility for reading and writing Ward's rgbe image format.
+/* utility for reading and writing Ward's rgbe texImg format.
    See rgbe.txt file for more details.
 */
 
@@ -14,12 +14,12 @@ typedef struct {
   int valid;            /* indicate which fields are valid */
   char programtype[16]; /* listed at beginning of file to identify it 
                          * after "#?".  defaults to "RGBE" */ 
-  float gamma;          /* image has already been gamma corrected with 
+  float gamma;          /* texImg has already been gamma corrected with 
                          * given gamma.  defaults to 1.0 (no correction) */
-  float exposure;       /* a value of 1.0 in an image corresponds to
+  float exposure;       /* a value of 1.0 in an texImg corresponds to
 			 * <exposure> watts/steradian/m^2. 
 			 * defaults to 1.0 */
-  int orientation;      /* Orientation of the image.  Use the same coded
+  int orientation;      /* Orientation of the texImg.  Use the same coded
                          * values as the TIFF and JPEG/JFIF/EXIF specs.
                          * defaults to 1 (-Y +X)
                          * (added by Larry Gritz, 7/2008)

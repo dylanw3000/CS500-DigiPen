@@ -114,7 +114,7 @@ struct aiTexel
  * them directly in the model file. There are two types of embedded textures: 
  * 1. Uncompressed textures. The color data is given in an uncompressed format. 
  * 2. Compressed textures stored in a file format like png or jpg. The raw file 
- * bytes are given so the application must utilize an image decoder (e.g. DevIL) to
+ * bytes are given so the application must utilize an texImg decoder (e.g. DevIL) to
  * get access to the actual color data.
  */
 struct aiTexture

@@ -1,4 +1,4 @@
-/* stb_image - v2.08 - public domain image loader - http://nothings.org/stb_image.h
+/* stb_image - v2.08 - public domain texImg loader - http://nothings.org/stb_image.h
                                      no warranty implied; use at your own risk
 
    Do this:
@@ -244,24 +244,24 @@ distribute, and modify this file as you see fit.
 //    stbi_image_free(data)
 //
 // Standard parameters:
-//    int *x       -- outputs image width in pixels
-//    int *y       -- outputs image height in pixels
-//    int *comp    -- outputs # of image components in image file
-//    int req_comp -- if non-zero, # of image components requested in result
+//    int *x       -- outputs texImg width in pixels
+//    int *y       -- outputs texImg height in pixels
+//    int *comp    -- outputs # of texImg components in texImg file
+//    int req_comp -- if non-zero, # of texImg components requested in result
 //
-// The return value from an image loader is an 'unsigned char *' which points
-// to the pixel data, or NULL on an allocation failure or if the image is
+// The return value from an texImg loader is an 'unsigned char *' which points
+// to the pixel data, or NULL on an allocation failure or if the texImg is
 // corrupt or invalid. The pixel data consists of *y scanlines of *x pixels,
 // with each pixel consisting of N interleaved 8-bit components; the first
-// pixel pointed to is top-left-most in the image. There is no padding between
-// image scanlines or between pixels, regardless of format. The number of
+// pixel pointed to is top-left-most in the texImg. There is no padding between
+// texImg scanlines or between pixels, regardless of format. The number of
 // components N is 'req_comp' if req_comp is non-zero, or *comp otherwise.
 // If req_comp is non-zero, *comp has the number of components that _would_
 // have been output otherwise. E.g. if you set req_comp to 4, you will always
 // get RGBA output, but you can check *comp to see if it's trivially opaque
-// because e.g. there were only 3 channels in the source image.
+// because e.g. there were only 3 channels in the source texImg.
 //
-// An output image with N components has the following components interleaved
+// An output texImg with N components has the following components interleaved
 // in this order in each pixel:
 //
 //     N=#comp     components
@@ -270,7 +270,7 @@ distribute, and modify this file as you see fit.
 //       3           red, green, blue
 //       4           red, green, blue, alpha
 //
-// If image loading fails for any reason, the return value will be NULL,
+// If texImg loading fails for any reason, the return value will be NULL,
 // and *x, *y, *comp will be unchanged. The function stbi_failure_reason()
 // can be queried for an extremely brief, end-user unfriendly explanation
 // of why the load failed. Define STBI_NO_FAILURE_STRINGS to avoid
@@ -344,7 +344,7 @@ distribute, and modify this file as you see fit.
 //
 // ===========================================================================
 //
-// HDR image support   (disable by defining STBI_NO_HDR)
+// HDR texImg support   (disable by defining STBI_NO_HDR)
 //
 // stb_image now supports loading HDR images in general, and currently
 // the Radiance .HDR file format, although the support is provided
@@ -372,8 +372,8 @@ distribute, and modify this file as you see fit.
 //     stbi_ldr_to_hdr_gamma(2.2f);
 //
 // Finally, given a filename (or an open file or memory block--see header
-// file for details) containing image data, you can query for the "most
-// appropriate" interface to use (that is, whether the image is HDR or
+// file for details) containing texImg data, you can query for the "most
+// appropriate" interface to use (that is, whether the texImg is HDR or
 // not), using:
 //
 //     stbi_is_hdr(char *filename);
@@ -389,7 +389,7 @@ distribute, and modify this file as you see fit.
 // is BGR stored in RGB).
 //
 // Call stbi_set_unpremultiply_on_load(1) as well to force a divide per
-// pixel to remove any premultiplied alpha *only* if the image file explicitly
+// pixel to remove any premultiplied alpha *only* if the texImg file explicitly
 // says there's premultiplied data (currently only happens in iPhone images,
 // and only if iPhone convert-to-rgb processing is on).
 //
@@ -429,7 +429,7 @@ extern "C" {
 //
 
 //
-// load image by filename, open file, or memory buffer
+// load texImg by filename, open file, or memory buffer
 //
 
 typedef struct
@@ -445,7 +445,7 @@ STBIDEF stbi_uc *stbi_load_from_callbacks(stbi_io_callbacks const *clbk  , void 
 
 #ifndef STBI_NO_STDIO
 STBIDEF stbi_uc *stbi_load_from_file  (FILE *f,                  int *x, int *y, int *comp, int req_comp);
-// for stbi_load_from_file, file pointer is left pointing immediately after image
+// for stbi_load_from_file, file pointer is left pointing immediately after texImg
 #endif
 
 #ifndef STBI_NO_LINEAR
@@ -481,10 +481,10 @@ STBIDEF int      stbi_is_hdr_from_file(FILE *f);
 // NOT THREADSAFE
 STBIDEF const char *stbi_failure_reason  (void);
 
-// free the loaded image -- this is just free()
+// free the loaded texImg -- this is just free()
 STBIDEF void     stbi_image_free      (void *retval_from_stbi_load);
 
-// get image dimensions & components without fully decoding
+// get texImg dimensions & components without fully decoding
 STBIDEF int      stbi_info_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp);
 STBIDEF int      stbi_info_from_callbacks(stbi_io_callbacks const *clbk, void *user, int *x, int *y, int *comp);
 
@@ -496,7 +496,7 @@ STBIDEF int      stbi_info_from_file  (FILE *f,                  int *x, int *y,
 
 
 
-// for image formats that explicitly notate that they have premultiplied alpha,
+// for texImg formats that explicitly notate that they have premultiplied alpha,
 // we just return the colors as stored in the file. set this flag to force
 // unpremultiplication. results are undefined if the unpremultiply overflow.
 STBIDEF void stbi_set_unpremultiply_on_load(int flag_true_if_should_unpremultiply);
@@ -505,7 +505,7 @@ STBIDEF void stbi_set_unpremultiply_on_load(int flag_true_if_should_unpremultipl
 // or just pass them through "as-is"
 STBIDEF void stbi_convert_iphone_png_to_rgb(int flag_true_if_should_convert);
 
-// flip the image vertically, so the first pixel in the output array is the bottom left
+// flip the texImg vertically, so the first pixel in the output array is the bottom left
 STBIDEF void stbi_set_flip_vertically_on_load(int flag_true_if_should_flip);
 
 // ZLIB client - used by PNG, available for other purposes
@@ -746,7 +746,7 @@ static int stbi__sse2_available()
 //  stbi__context struct and start_xxx functions
 
 // stbi__context structure is our basic context used by all images, so it
-// contains all the IO context, plus some basic image information
+// contains all the IO context, plus some basic texImg information
 typedef struct
 {
    stbi__uint32 img_x, img_y;
@@ -1200,7 +1200,7 @@ STBIDEF void   stbi_hdr_to_ldr_scale(float scale) { stbi__h2l_scale_i = 1/scale;
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// Common code used by all image loaders
+// Common code used by all texImg loaders
 //
 
 enum
@@ -1359,7 +1359,7 @@ static unsigned char *stbi__convert_format(unsigned char *data, int img_n, int r
 
       #define COMBO(a,b)  ((a)*8+(b))
       #define CASE(a,b)   case COMBO(a,b): for(i=x-1; i >= 0; --i, src += a, dest += b)
-      // convert source image with img_n components to one with req_comp components;
+      // convert source texImg with img_n components to one with req_comp components;
       // avoid switch per pixel, so use switch per scanline and massive macros
       switch (COMBO(img_n, req_comp)) {
          CASE(1,2) dest[0]=src[0], dest[1]=255; break;
@@ -1480,7 +1480,7 @@ typedef struct
    int img_mcu_x, img_mcu_y;
    int img_mcu_w, img_mcu_h;
 
-// definition of jpeg image component
+// definition of jpeg texImg component
    struct
    {
       int id;
@@ -2753,7 +2753,7 @@ static int stbi__process_frame_header(stbi__jpeg *z, int scan)
       z->img_comp[i].y = (s->img_y * z->img_comp[i].v + v_max-1) / v_max;
       // to simplify generation, we'll allocate enough memory to decode
       // the bogus oversized data from using interleaved MCUs and their
-      // big blocks (e.g. a 16x16 iMCU on an image of width 33); we won't
+      // big blocks (e.g. a 16x16 iMCU on an texImg of width 33); we won't
       // discard the extra data until colorspace conversion
       z->img_comp[i].w2 = z->img_mcu_x * z->img_comp[i].h * 8;
       z->img_comp[i].h2 = z->img_mcu_y * z->img_comp[i].v * 8;
@@ -2814,7 +2814,7 @@ static int stbi__decode_jpeg_header(stbi__jpeg *z, int scan)
    return 1;
 }
 
-// decode image to YCbCr format
+// decode texImg to YCbCr format
 static int stbi__decode_jpeg_image(stbi__jpeg *j)
 {
    int m;
@@ -2830,7 +2830,7 @@ static int stbi__decode_jpeg_image(stbi__jpeg *j)
          if (!stbi__process_scan_header(j)) return 0;
          if (!stbi__parse_entropy_coded_data(j)) return 0;
          if (j->marker == STBI__MARKER_none ) {
-            // handle 0s at the end of image data from IP Kamera 9060
+            // handle 0s at the end of texImg data from IP Kamera 9060
             while (!stbi__at_eof(j->s)) {
                int x = stbi__get8(j->s);
                if (x == 255) {
@@ -3319,7 +3319,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
    // validate req_comp
    if (req_comp < 0 || req_comp > 4) return stbi__errpuc("bad req_comp", "Internal error");
 
-   // load a jpeg image from whichever source, but leave in YCbCr format
+   // load a jpeg texImg from whichever source, but leave in YCbCr format
    if (!stbi__decode_jpeg_image(z)) { stbi__cleanup_jpeg(z); return NULL; }
 
    // determine actual number of components to generate
@@ -4532,7 +4532,7 @@ static int stbi__png_info(stbi__context *s, int *x, int *y, int *comp)
 }
 #endif
 
-// Microsoft/Windows BMP image
+// Microsoft/Windows BMP texImg
 
 #ifndef STBI_NO_BMP
 static int stbi__bmp_test_raw(stbi__context *s)
@@ -4821,7 +4821,7 @@ static int stbi__tga_info(stbi__context *s, int *x, int *y, int *comp)
         stbi__rewind(s);
         return 0;      // only RGB or indexed allowed
     }
-    sz = stbi__get8(s);              // image type
+    sz = stbi__get8(s);              // texImg type
     // only RGB or grey allowed, +/- RLE
     if ((sz != 1) && (sz != 2) && (sz != 3) && (sz != 9) && (sz != 10) && (sz != 11)) return 0;
     stbi__skip(s,9);
@@ -4855,7 +4855,7 @@ static int stbi__tga_test(stbi__context *s)
    stbi__get8(s);      //   discard Offset
    sz = stbi__get8(s);   //   color type
    if ( sz > 1 ) return 0;   //   only RGB or indexed allowed
-   sz = stbi__get8(s);   //   image type
+   sz = stbi__get8(s);   //   texImg type
    if ( (sz != 1) && (sz != 2) && (sz != 3) && (sz != 9) && (sz != 10) && (sz != 11) ) return 0;   //   only RGB or grey allowed, +/- RLE
    stbi__get16be(s);      //   discard palette start
    stbi__get16be(s);      //   discard palette length
@@ -4890,7 +4890,7 @@ static stbi_uc *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int 
    int tga_bits_per_pixel = stbi__get8(s);
    int tga_comp = tga_bits_per_pixel / 8;
    int tga_inverted = stbi__get8(s);
-   //   image data
+   //   texImg data
    unsigned char *tga_data;
    unsigned char *tga_palette = NULL;
    int i, j;
@@ -5018,7 +5018,7 @@ static stbi_uc *stbi__tga_load(stbi__context *s, int *x, int *y, int *comp, int 
          //   in case we're in RLE mode, keep counting down
          --RLE_count;
       }
-      //   do I need to invert the image?
+      //   do I need to invert the texImg?
       if ( tga_inverted )
       {
          for (j = 0; j*2 < tga_height; ++j)
@@ -5104,7 +5104,7 @@ static stbi_uc *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int 
    if (channelCount < 0 || channelCount > 16)
       return stbi__errpuc("wrong channel count", "Unsupported number of channels in PSD image");
 
-   // Read the rows and columns of the image.
+   // Read the rows and columns of the texImg.
    h = stbi__get32be(s);
    w = stbi__get32be(s);
 
@@ -5129,7 +5129,7 @@ static stbi_uc *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int 
    // Skip the Mode Data.  (It's the palette for indexed color; other info for other modes.)
    stbi__skip(s,stbi__get32be(s) );
 
-   // Skip the image resources.  (resolution, pen tool paths, etc)
+   // Skip the texImg resources.  (resolution, pen tool paths, etc)
    stbi__skip(s, stbi__get32be(s) );
 
    // Skip the reserved data.
@@ -5143,7 +5143,7 @@ static stbi_uc *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int 
    if (compression > 1)
       return stbi__errpuc("bad compression", "PSD has an unknown compression format");
 
-   // Create the destination image.
+   // Create the destination texImg.
    out = (stbi_uc *) stbi__malloc(4 * w*h);
    if (!out) return stbi__errpuc("outofmem", "Out of memory");
    pixelCount = w*h;
@@ -5151,7 +5151,7 @@ static stbi_uc *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int 
    // Initialize the data to zero.
    //memset( out, 0, pixelCount * 4 );
 
-   // Finally, the image data.
+   // Finally, the texImg data.
    if (compression) {
       // RLE as used by .PSD and .TIFF
       // Loop until you get the number of unpacked bytes you are expecting:
@@ -5209,8 +5209,8 @@ static stbi_uc *stbi__psd_load(stbi__context *s, int *x, int *y, int *comp, int 
       }
 
    } else {
-      // We're at the raw image data.  It's each channel in order (Red, Green, Blue, Alpha, ...)
-      // where each channel consists of an 8-bit value for each pixel in the image.
+      // We're at the raw texImg data.  It's each channel in order (Red, Green, Blue, Alpha, ...)
+      // where each channel consists of an 8-bit value for each pixel in the texImg.
 
       // Read the data by channel.
       for (channel = 0; channel < 4; channel++) {
@@ -5562,7 +5562,7 @@ static void stbi__out_gif_code(stbi__gif *g, stbi__uint16 code)
    stbi_uc *p, *c;
 
    // recurse to decode the prefixes, since the linked-list is backwards,
-   // and working backwards through an interleaved image would be nasty
+   // and working backwards through an interleaved texImg would be nasty
    if (g->codes[code].prefix >= 0)
       stbi__out_gif_code(g, g->codes[code].prefix);
 
@@ -5946,8 +5946,8 @@ static float *stbi__hdr_load(stbi__context *s, int *x, int *y, int *comp, int re
    // Read data
    hdr_data = (float *) stbi__malloc(height * width * req_comp * sizeof(float));
 
-   // Load image data
-   // image data is stored as some number of sca
+   // Load texImg data
+   // texImg data is stored as some number of sca
    if ( width < 8 || width >= 32768) {
       // Read flat data
       for (j=0; j < height; ++j) {
@@ -6178,7 +6178,7 @@ static int stbi__pic_info(stbi__context *s, int *x, int *y, int *comp)
 //
 // Known limitations:
 //    Does not support comments in the header section
-//    Does not support ASCII image data (formats P2 and P3)
+//    Does not support ASCII texImg data (formats P2 and P3)
 //    Does not support 16-bit-per-channel
 
 #ifndef STBI_NO_PNM
@@ -6451,7 +6451,7 @@ STBIDEF int stbi_info_from_callbacks(stbi_io_callbacks const *c, void *user, int
               attempt to fix trans_data warning (Won Chun)
       1.23    fixed bug in iPhone support
       1.22  (2010-07-10)
-              removed image *writing* support
+              removed texImg *writing* support
               stbi_info support from Jetro Lauha
               GIF support from Jean-Marc Lienher
               iPhone PNG-extensions from James Brown

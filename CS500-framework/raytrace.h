@@ -22,7 +22,6 @@ class Material
 public:
     vec3 Kd, Ks, Kt;
     float alpha;
-    unsigned int texid;
 
     float Pd, Pr, Pt;
     float IoR = 1.f;
@@ -30,11 +29,11 @@ public:
     virtual bool isLight() { return false; }
 
     bool isTexture = false;
-    Texture* tex;
+    _Image* tex;
 
-    Material() : Kd(vec3(1.0, 0.5, 0.0)), Ks(vec3(1, 1, 1)), alpha(1.0), texid(0) { Pd = length(Kd) / (length(Kd) + length(Ks)); Pr = length(Ks) / (length(Kd) + length(Ks)); }
+    Material() : Kd(vec3(1.0, 0.5, 0.0)), Ks(vec3(1, 1, 1)), alpha(1.0) { Pd = length(Kd) / (length(Kd) + length(Ks)); Pr = length(Ks) / (length(Kd) + length(Ks)); }
     Material(const vec3 Kd_, const vec3 Ks_, const float a_)
-        : Kd(Kd_), Ks(Ks_), Kt(vec3(0.f)), alpha(a_), texid(0) {
+        : Kd(Kd_), Ks(Ks_), Kt(vec3(0.f)), alpha(a_) {
         // s = length(Kd) + length(Ks) + length(Kt); 
         Pd = length(Kd) / (length(Kd) + length(Ks)); 
         Pr = length(Ks) / (length(Kd) + length(Ks));
@@ -45,7 +44,6 @@ public:
         Kd = o.Kd;  
         Ks = o.Ks;  
         alpha = o.alpha;  
-        texid = o.texid; 
         Pd = length(Kd) / (length(Kd) + length(Ks)); 
         Pr = length(Ks) / (length(Kd) + length(Ks)); 
         // std::cout << Pd << std::endl; 
@@ -53,7 +51,7 @@ public:
 
     // transmissive
     Material(const vec3 Kd_, const vec3 Ks_, const float a_, const vec3 Kt_, const float IoR_)
-        : Kd(Kd_), Ks(Ks_), Kt(Kt_), alpha(a_), texid(0), IoR(IoR_)
+        : Kd(Kd_), Ks(Ks_), Kt(Kt_), alpha(a_), IoR(IoR_)
     {
         float s = length(Kd) + length(Ks) + length(Kt); 
         Pd = length(Kd) / s;
@@ -107,9 +105,9 @@ public:
 
 class LightTexture : public Light {
 public:
-    LightTexture(const std::string& path) : Light(vec3(1.f)) {
+    LightTexture(std::string path) : Light(vec3(1.f)) {
         isTexture = true;
-        tex = new Texture(path);
+        tex = new _Image(path.c_str());
     }
 };
 
@@ -145,11 +143,13 @@ public:
     void triangleMesh(MeshData* mesh);
 
     // The main program will call the TraceImage method to generate
-    // and return the image.  This is the Ray Tracer!
+    // and return the texImg.  This is the Ray Tracer!
     void TraceImage(Color* image, const int pass);
     vec3 TracePath(Ray ray);
 
     // Intersection SampleSphere(vec3 C, float R);
     Intersection SampleLight();
     float PdfLight(Intersection Q);
+
+    _Image* texImg;
 };

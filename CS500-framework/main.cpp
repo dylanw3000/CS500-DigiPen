@@ -61,11 +61,11 @@ void ReadScene(const std::string inName, Scene* scene)
     input.close();
 }
 
-// Write the image as a HDR(RGBE) image.  
+// Write the texImg as a HDR(RGBE) texImg.  
 #include "rgbe.h"
 void WriteHdrImage(const std::string outName, const int width, const int height, Color* image, int pass)
 {
-    // Turn image from a 2D-bottom-up array of Vector3D to an top-down-array of floats
+    // Turn texImg from a 2D-bottom-up array of Vector3D to an top-down-array of floats
     float* data = new float[width*height*3];
     float* dp = data;
     for (int y=height-1;  y>=0;  --y) {
@@ -75,7 +75,7 @@ void WriteHdrImage(const std::string outName, const int width, const int height,
             *dp++ = pixel[1];
             *dp++ = pixel[2]; } }
 
-    // Write image to file in HDR (a.k.a RADIANCE) format
+    // Write texImg to file in HDR (a.k.a RADIANCE) format
     rgbe_header_info info;
     char errbuf[100] = {0};
 
@@ -111,13 +111,13 @@ int main(int argc, char** argv)
 
     scene->Finit();
 
-    // Allocate and clear an image array
+    // Allocate and clear an texImg array
     Color *image =  new Color[scene->width*scene->height];
     for (int y=0;  y<scene->height;  y++)
         for (int x=0;  x<scene->width;  x++)
             image[y*scene->width + x] = Color(0,0,0);
 
-    // RayTrace the image
+    // RayTrace the texImg
 
     int maxPass = 8192;
     for (int pass = 0; pass < maxPass; pass++) {
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
                 || pass == 1 || pass == 8
             )
         ) {
-            // Write the image
+            // Write the texImg
             WriteHdrImage(to_string(pass) + hdrName, scene->width, scene->height, image, pass);
             fprintf(stderr, "\n");
         }

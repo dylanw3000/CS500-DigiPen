@@ -74,13 +74,13 @@ public:
 
 class Sphere : public Shape {
 public:
-	Sphere(glm::vec3 _pos, float _r, Material* _mat) : pos(_pos), radius(_r) {
+	Sphere(glm::vec3 _center, float _r, Material* _mat) : center(_center), radius(_r) {
 		mat = _mat;
 	}
 
 	Intersection Intersect(Ray ray);
 
-	glm::vec3 pos;
+	glm::vec3 center;
 	float radius;
 	// Material* mat;
 

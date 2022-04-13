@@ -1,4 +1,6 @@
 
+#if false
+
 #include <glbinding/gl/gl.h>
 #include <glbinding/Binding.h>
 using namespace gl;
@@ -37,3 +39,5 @@ Texture::Texture(const std::string& path) : textureId(0)
     glBindTexture(GL_TEXTURE_2D, 0);
     stbi_image_free(image);
 }
+
+#endif
