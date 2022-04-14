@@ -125,7 +125,7 @@ public:
 		mat = _mat;
 	}
 
-	Triangle(vec3 _v0, vec3 _v1, vec3 _v2, vec3 _n0, vec3 _n1, vec3 _n2, Material* _mat) : v0(_v0), v1(_v1), v2(_v2), n0(_n0), n1(_n1), n2(_n2) {
+	Triangle(vec3 _v0, vec3 _v1, vec3 _v2, vec3 _n0, vec3 _n1, vec3 _n2, vec2 _t0, vec2 _t1, vec2 _t2, Material* _mat) : v0(_v0), v1(_v1), v2(_v2), n0(_n0), n1(_n1), n2(_n2), t0(_t0), t1(_t1), t2(_t2) {
 		mat = _mat;
 	}
 
@@ -140,6 +140,10 @@ public:
 	glm::vec3 n0;
 	glm::vec3 n1;
 	glm::vec3 n2;
+
+	glm::vec2 t0;
+	glm::vec2 t1;
+	glm::vec2 t2;
 };
 
 

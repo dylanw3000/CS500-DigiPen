@@ -6,6 +6,7 @@
 Intersection Sphere::Intersect(Ray ray) {
 	Intersection out;
 
+	/*
 	vec3 Q = ray.origin - center;
 
 	float t0 = -dot(Q, ray.dir) + pow(pow(dot(Q, ray.dir), 2.f) - dot(Q, Q) + pow(radius, 2.f), 0.5f);
@@ -32,6 +33,29 @@ Intersection Sphere::Intersect(Ray ray) {
 	vec2 uv = vec2(theta / (2 * PI), psi / PI);
 
 	out.addIntersect(this, t, pos, normal, uv);
+	return out;
+	*/
+
+	vec3 Q = ray.origin - center;
+	float a = dot(ray.dir, ray.dir);
+	float b = 2.f * dot(Q, ray.dir);
+	float c = dot(Q, Q) - (radius * radius);
+
+	float discriminant = b * b - 4 * a * c;
+	if (discriminant >= 0) {
+		discriminant = sqrtf(discriminant / 4.f);
+		float left = -b / 2.f;
+		float t = min(left - discriminant, left + discriminant);
+
+		vec3 pos = ray.eval(t);
+		vec3 normal = glm::normalize(pos - center);
+		float theta = atan2(normal.y, normal.x);
+		float psi = acos(normal.z);
+		vec2 uv = vec2(theta / (2 * PI), psi / PI);
+
+		out.addIntersect(this, t, pos, normal, uv);
+	}
+
 	return out;
 }
 
@@ -198,8 +222,55 @@ Intersection Triangle::Intersect(Ray ray) {
 	if (v < 0.f || u + v > 1.f) { return out; }
 
 	float t = dot(e2, q) / d;
-	if (t < 0.f) { return out; }
+	if (t < 10E-3) { return out; }
 
-	out.addIntersect(this, t, ray.eval(t), (1.f-u-v)*n0 + u*n1 + v*n2);
+	if (false) {
+		out.addIntersect(this, t, ray.eval(t), (1.f - u - v) * n0 + u * n1 + v * n2);
+		return out;
+	}
+
+	vec3 pos = ray.eval(t);
+	vec3 normal = vec3();
+	if (n0 != vec3() && n1 != vec3() && n2 != vec3())
+		normal = (1 - u - v) * n0 + u * n1 + v * n2;
+	else
+		normal = cross(e2, e1);
+
+	vec2 uv = (1 - u - v) * t0 + u * t1 + v * t2;
+
+	out.addIntersect(this, t, pos, normal, uv);
 	return out;
+
+	/*
+
+	vec3 E1 = V1 - V0;
+	vec3 E2 = V2 - V0;
+
+	vec3 p = cross(r.d, E2);
+	float d = dot(p, E1);
+	if (d == 0) // Ray is parallel to Triangle.
+		return std::nullopt;
+	vec3 S = r.o - V0;
+	float u = dot(p, S) / d;
+	if (u < 0 || u > 1) // Ray intersects plane, but outside E2 edge
+		return std::nullopt;
+	vec3 q = cross(S, E1);
+	float v = dot(r.d, q) / d;
+	if (v < 0 || (u + v) > 1) // Ray intersects plane, but outside other edges
+		return std::nullopt;
+	float t = dot(E2, q) / d;
+	if (t < 0.0001f) // Ray's negative half intersects triangle
+		return std::nullopt;
+
+	vec3 pos = r.eval(t);
+
+	vec3 normal = vec3();
+	if (N0 != vec3() && N1 != vec3() && N2 != vec3())
+		normal = (1 - u - v) * N0 + u * N1 + v * N2;
+	else
+		normal = cross(E2, E1);
+
+	vec2 uv = (1 - u - v) * T0 + u * T1 + v * T2;
+	return Intersection(t, pos, normal, uv, this);
+	*/
 }

@@ -45,10 +45,10 @@ void Scene::Finit()
 
     /*
     texImg = new _Image("sample.png");
-
+    */
     vec3 a = texImg->getUV(.5, .5);
     std::cout << a.x << ", " << a.y << ", " << a.z << std::endl;
-    */
+    
 }
 
 
@@ -63,6 +63,9 @@ void Scene::triangleMesh(MeshData* mesh)
             mesh->vertices[tri[0]].nrm,
             mesh->vertices[tri[1]].nrm,
             mesh->vertices[tri[2]].nrm,
+            mesh->vertices[tri[0]].tex,
+            mesh->vertices[tri[1]].tex,
+            mesh->vertices[tri[2]].tex,
             currentMat
         );
         vectorOfShapes.push_back(t);
@@ -422,6 +425,7 @@ vec3 Scene::TracePath(Ray ray) {
     
     if (!P.collision) return C;
     if (P.object->mat->isLight()) return EvalRadiance(P);
+    // return P.object->mat->Kd + P.object->mat->Ks;
 
     vec3 wo = -ray.dir;
     vec3 wi = normalize(ray.dir);
