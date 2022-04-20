@@ -435,7 +435,7 @@ vec3 Scene::TracePath(Ray ray) {
 
     while (myrandom(RNGen) <= russianRoulette) {
 
-#if false
+#if true
         // Explicit Light connection
         Intersection L = SampleLight();
         float p = PdfLight(L) / GeometryFactor(P, L);
